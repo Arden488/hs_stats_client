@@ -6,7 +6,27 @@ import './index.css';
 import App from './App';
 import * as serviceWorker from './serviceWorker';
 
+const defaults = {
+  activeDeck: {
+    __typename: 'ActiveDeck',
+    name: null
+  }
+};
+
+const resolvers = {
+  Mutation: {
+    updateActiveDeck: (_, { id, name }, { cache }) => {
+      cache.writeData({ data: { activeDeck: { id, name, __typename: 'ActiveDeck' } } });
+      return null;
+    },
+  }
+}
+
 const client = new ApolloClient({
+  clientState: {
+    defaults,
+    resolvers
+  },
   uri: "http://localhost:3333/graphql"
 });
 
@@ -28,7 +48,4 @@ if (module.hot) {
   })
 }
 
-// If you want your app to work offline and load faster, you can change
-// unregister() to register() below. Note this comes with some pitfalls.
-// Learn more about service workers: http://bit.ly/CRA-PWA
 serviceWorker.unregister();
