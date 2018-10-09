@@ -3,6 +3,7 @@ import { compose, graphql } from 'react-apollo';
 import './App.css';
 import Decks from './components/Decks';
 import getActiveDeck from './graphql/getActiveDeck';
+import { Link } from 'react-router-dom'
 
 class App extends Component {
   showActiveDeck(deck) {
@@ -10,7 +11,11 @@ class App extends Component {
 
     return (
       <div>
-        {deck.name}
+        <h2>{deck.name}</h2>
+        <img src={deck.heroImage} alt={deck.name} />
+        <p>
+          <Link to="/new-game">New Game</Link>
+        </p>
       </div>
     )
   }
