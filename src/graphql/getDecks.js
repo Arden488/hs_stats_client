@@ -1,9 +1,9 @@
 import gql from 'graphql-tag';
 
 export default gql` {
-  activeDeck @client {
+  allDecks {
+    _id,
     name,
-    heroImage
+    code
   }
 }`;
-

@@ -1,9 +1,10 @@
 import gql from 'graphql-tag';
 
 export default gql` {
-  activeDeck @client {
+  allArchetypes {
+    _id,
     name,
-    heroImage
+    charClass,
+    code
   }
 }`;
-
