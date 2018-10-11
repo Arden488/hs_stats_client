@@ -4,6 +4,7 @@ export default gql` {
   allWinrates {
     _id,
     deckId,
+    opponentClass,
     opponentArchetypeId,
     wins,
     losses,
