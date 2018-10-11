@@ -1,35 +1,42 @@
 import React from 'react';
 import { Query, graphql, compose } from 'react-apollo';
-import gql from 'graphql-tag';
 import { decodeDeck } from '../helpers/deck_codes_utils';
 import { getCardById } from '../helpers/cards_api';
 import { setData } from '../helpers/storage_utils';
 import updateActiveDeck from '../graphql/updateActiveDeck';
-
-const GET_DECKS = gql` {
-  allDecks {
-    _id,
-    name,
-    code
-  }
-}`;
+import getDecks from '../graphql/getDecks';
 
 class Decks extends React.Component {
-  setActiveDeck(id) {
-    const deck = decodeDeck(id);
-    const deckCards = deck.cards.map(card => {
-      return getCardById(card[0]);
+  setActiveDeck(deck) {
+    setData('deck', deck);
+  }
+
+  fetchDeckCards(cardsIds) {
+    const deckCards = cardsIds.map(card => {
+      const cardInfo = getCardById(card[0]);
+      cardInfo.count = card[1];
+
+      return cardInfo;
     });
 
-    setData('deck', deck);
-    setData('deckCards', deckCards);
+    return deckCards;
+  }
+
+  fetchDeckHeroImage(heroId) {
+    const heroCard = getCardById(heroId[0]);
+    
+    return `https://art.hearthstonejson.com/v1/render/latest/enUS/256x/${heroCard.id}.png`;
   }
   
   handleDeckClick(deck) {
-    this.setActiveDeck(deck.code);
+    const deckData = decodeDeck(deck.code);
+    deck.cards = this.fetchDeckCards(deckData.cards);
+    deck.heroImage = this.fetchDeckHeroImage(deckData.heroes);
+    
+    this.setActiveDeck(deck);
 
     this.props.updateActiveDeck({
-      variables: { id: deck.id, name: deck.name }
+      variables: { id: deck.id, name: deck.name, heroImage: deck.heroImage }
     })
   }
 
@@ -45,12 +52,12 @@ class Decks extends React.Component {
 
   render() {
     return (
-      <Query query={GET_DECKS}>
-        {({ loading, error, data, client }) => {
+      <Query query={getDecks}>
+        {({ loading, error, data }) => {
           if (loading) return <p>Loading...</p>;
           if (error) return <p>Error: {error}</p>;
 
-            return this.outputDecksList(data.allDecks, client);
+            return this.outputDecksList(data.allDecks);
         }}
       </Query>
     );
