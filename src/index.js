@@ -25,6 +25,10 @@ const defaults = {
 
 const resolvers = {
   Mutation: {
+    resetGame: (_, d, { cache }) => {
+      cache.writeData({ data : { currentGame : defaults.currentGame } })
+      return null;
+    },
     updateActiveDeck: (_, { id, name, heroImage }, { cache }) => {
       cache.writeData({ data: { activeDeck: { id, name, heroImage, __typename: 'ActiveDeck' } } });
       return null;
