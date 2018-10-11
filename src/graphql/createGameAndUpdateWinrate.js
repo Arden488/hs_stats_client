@@ -18,11 +18,20 @@ export default gql`
     }
     updateWinrate(
       deckId: $deckId,
+      opponentClass: $opponentClass, 
       opponentArchetype: $opponentArchetype,
       outcome: $outcome,
       cards: $mulligan
     ) {
-      _id
+      _id,
+      wins,
+      losses,
+      games,
+      cards {
+        cardId,
+        wins,
+        losses
+      }
     }
   }
 `;
