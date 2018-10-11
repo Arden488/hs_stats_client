@@ -13,4 +13,8 @@ function getCardById(id) {
   return card;
 }
 
-export { getCardById };
+function getCardImageById(id, size = '256') {
+  return `https://art.hearthstonejson.com/v1/render/latest/enUS/${size}x/${id}.png`;
+}
+
+export { getCardById, getCardImageById };
