@@ -7,6 +7,7 @@ import { BrowserRouter as Router, Route } from 'react-router-dom'
 import NewGame from './components/NewGame.js';
 import App from './App';
 import * as serviceWorker from './serviceWorker';
+import { Wrapper } from './styles/layouts';
 
 const defaults = {
   activeDeck: {
@@ -65,17 +66,17 @@ const client = new ApolloClient({
     resolvers,
     typeDefs
   },
-  uri: "http://localhost:3333/graphql"
+  uri: 'https://hs-stats-server.herokuapp.com/graphql'
 });
 
 const render = Component => {
   return ReactDOM.render(
     <ApolloProvider client={client}>
       <Router>
-        <div>
+        <Wrapper>
           <Route exact path="/" component={App} />
           <Route path="/new-game" component={NewGame} />
-        </div>
+        </Wrapper>
       </Router>
     </ApolloProvider>, 
     document.getElementById('root')
@@ -83,12 +84,5 @@ const render = Component => {
 };
 
 render(App);
-
-if (module.hot) {
-  module.hot.accept('./App', () => {
-    const NextApp = require('./App').default
-    render(NextApp);
-  })
-}
 
 serviceWorker.unregister();
