@@ -5,9 +5,42 @@ import Decks from './components/Decks';
 import getActiveDeck from './graphql/getActiveDeck';
 import { Link } from 'react-router-dom'
 import getAllWinrates from './graphql/getAllWinrates';
+import styled from 'styled-components'
+import { LargeButton } from './styles/buttons';
+
+const ActiveDeck = styled.section`
+  display: grid;
+  grid-template-columns: 40% 70%;
+  
+  @media (max-width: 667px) {
+    grid-template-columns: auto
+  }
+`;
+
+const MainContent = styled.article`
+  text-align: center;
+  
+  img {
+    max-width: 100%;
+  }
+
+  @media (max-width: 667px) {
+    text-align: center;
+
+    img {
+      max-height: 200px;
+    }
+  }
+`;
+
+const Aside = styled.aside`
+  @media (max-width: 667px) {
+    text-align: center;
+  }
+`;
 
 class App extends Component {
-  outputTotalWinrate(winrates) {
+  outputTotalWinrate(deck, winrates) {
     let games = 0;
     let wins = 0;
     let losses = 0;
@@ -22,10 +55,16 @@ class App extends Component {
 
     return (
       <div>
+        <h2>{deck.name}</h2>
+
         <p>Total games played: {games}</p>
         <p>Total wins: {wins}</p>
         <p>Total losses: {losses}</p>
         <p>Total winrate: {winrate}</p>
+
+        <p>
+          <Link to="/new-game"><LargeButton primary>New Game</LargeButton></Link>
+        </p>
       </div>
     )
   }
@@ -34,21 +73,21 @@ class App extends Component {
     if (!deck.name) return <Decks />
 
     return (
-      <div>
-        <h2>{deck.name}</h2>
-        <img src={deck.heroImage} alt={deck.name} />
-        <Query query={getAllWinrates}>
-          {({ loading, error, data }) => {
-            if (loading) return <p>Loading...</p>;
-            if (error) return <p>Error: {error}</p>;
+      <ActiveDeck>
+        <MainContent>
+          <img src={deck.heroImage} alt={deck.name} />
+        </MainContent>
+        <Aside>
+          <Query query={getAllWinrates}>
+            {({ loading, error, data }) => {
+              if (loading) return <p>Loading...</p>;
+              if (error) return <p>Error: {error}</p>;
 
-            return this.outputTotalWinrate(data.allWinrates);
-          }}
-        </Query>
-        <p>
-          <Link to="/new-game">New Game</Link>
-        </p>
-      </div>
+              return this.outputTotalWinrate(deck, data.allWinrates);
+            }}
+          </Query>
+        </Aside>
+      </ActiveDeck>
     )
   }
 
@@ -56,7 +95,7 @@ class App extends Component {
     const { activeDeck } = this.props;
 
     return (
-      <div className="App">
+      <div>
         {this.showActiveDeck(activeDeck)}
       </div>
     );

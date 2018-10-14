@@ -6,6 +6,13 @@ import { setData } from '../helpers/storage_utils';
 import updateActiveDeck from '../graphql/updateActiveDeck';
 import getDecks from '../graphql/getDecks';
 
+import styled from 'styled-components'
+import { LargeButton } from '../styles/buttons';
+
+const DeckList = styled.div`
+  text-align: center;
+`;
+
 class Decks extends React.Component {
   setActiveDeck(deck) {
     setData('deck', deck);
@@ -43,23 +50,26 @@ class Decks extends React.Component {
   outputDecksList(decks) {
     return decks.map(({ _id, name, code }) => (
       <div key={_id}>
-        <button onClick={() => this.handleDeckClick({ id: _id, name, code })}>
+        <LargeButton onClick={() => this.handleDeckClick({ id: _id, name, code })}>
           {`${name}`}
-        </button>
+        </LargeButton>
       </div>
     ));
   }
 
   render() {
     return (
-      <Query query={getDecks}>
-        {({ loading, error, data }) => {
-          if (loading) return <p>Loading...</p>;
-          if (error) return <p>Error: {error}</p>;
+      <DeckList>
+        <h2>Choose your deck:</h2>
+        <Query query={getDecks}>
+          {({ loading, error, data }) => {
+            if (loading) return <p>Loading list of decks...</p>;
+            if (error) return <p>Error: {error}</p>;
 
-            return this.outputDecksList(data.allDecks);
-        }}
-      </Query>
+              return this.outputDecksList(data.allDecks);
+          }}
+        </Query>
+      </DeckList>
     );
   }
 }

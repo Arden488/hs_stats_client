@@ -1,6 +1,10 @@
 import React from 'react';
 
-import { times as _times, find as _find, filter as _filter } from 'lodash';
+import { 
+  times as _times, 
+  filter as _filter, 
+  sortBy as _sortBy
+} from 'lodash';
 import { getData } from '../helpers/storage_utils';
 import { getCardImageById } from '../helpers/cards_api';
 import { Query, compose, graphql } from 'react-apollo';
@@ -8,12 +12,67 @@ import updateGameMulligan from '../graphql/updateGameMulligan';
 import getCurrentGame from '../graphql/getCurrentGame';
 import getWinratesByClass from '../graphql/getWinratesByClass';
 
+import styled from 'styled-components'
+import { LargeButton } from '../styles/buttons';
+import { colors, spacers } from '../styles/vars';
+
+const ActionBlock = styled.div`
+  text-align: center;
+  padding: ${spacers.paddings.x2}
+  margin-bottom: ${spacers.baseSpacer * 5}px
+`;
+
+const MulliganChosenList = styled.div`
+  display: grid;
+  grid-template-columns: repeat(${props => `${props.count}, 1fr` });
+  grid-column-gap: ${spacers.baseSpacer * 1}px
+`;
+
+const MulliganPlaceholder = styled.div`
+  height: 110px;
+  background: ${colors.blocksBg}
+`;
+
+const MulliganChosen = styled.button`
+  background: none;
+  border: 0;  
+
+  img {
+    display: block;
+    max-width: 100%;
+  }
+`;
+
+const MulliganCardList = styled.div`
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+`;
+
+const MulliganCardChoice = styled.button`
+  background: none;
+  border: 0;  
+  color: ${colors.text};
+  text-align: center;
+
+  span {
+    span {
+      display: block;
+      color: ${colors.textFade}
+    }
+  }
+
+  img {
+    display: block;
+    max-width: 100%;
+  }
+`;
+
 class ChooseMulligan extends React.Component {
   constructor(props) {
     super(props);
 
     this.state = {
-      mulliganCount: 3,
+      mulliganCount: 4,
       mulligan: []
     }
 
@@ -44,7 +103,10 @@ class ChooseMulligan extends React.Component {
       const games = winrateStats.wins + winrateStats.losses;
       const winrate = `${((winrateStats.wins/games) * 100).toFixed(2)}%`;
       return (
-        <span>{winrate} (W: {winrateStats.wins}/ L: {winrateStats.losses}/ G: {games})</span>
+        <span>
+          {winrate} 
+          <span>(W: {winrateStats.wins}/ L: {winrateStats.losses})</span>
+        </span>
       )
     }
 
@@ -52,39 +114,57 @@ class ChooseMulligan extends React.Component {
   }
 
   outputCardList(opponentClass) {
-    const cardsArray = getData('deck').cards;
+    let cardsArray = getData('deck').cards;
 
-    return <Query 
-      query={getWinratesByClass} 
-      variables={{ deckId: getData('deck').id, opponentClass }}
-    >
-      {({ loading, error, data }) => {
-        if (loading) return <span>Loading...</span>;
-        if (error) return <span>Error: {error}</span>;
+    return (
+      <div>
+        <p>Choose your mulligan:</p>
+        <MulliganCardList>
+          <Query 
+            query={getWinratesByClass} 
+            variables={{ deckId: getData('deck').id, opponentClass }}
+          >
+            {({ loading, error, data }) => {
+              if (loading) return <span>Loading...</span>;
+              if (error) return <span>Error: {error}</span>;
 
-        const cardWinrates = this.calculateCardWinrate(data.getWinratesByClass);
+              const cardWinrates = this.calculateCardWinrate(data.getWinratesByClass);
 
-        const cards = cardsArray.map(card => {
-          const image = getCardImageById(card.id);
-          const ex = _filter(this.state.mulligan, { cardId: card.id });
+              cardsArray = _sortBy(cardsArray, [o => {
+                const wr = cardWinrates[o.id];
+                if (!wr) {
+                  return -1 - o.cost;
+                }
 
-          const winrate = this.outputCardWinrate(cardWinrates[card.id]);
-        
-          if(ex && ex.length === card.count) {
-            return false;
-          }
-    
-          return (
-            <button key={card.id} onClick={() => this.handleChooseMulligan(card)}>
-              <img width="100" src={image} alt={card.name} />
-              <span>{winrate}</span>
-            </button>
-          );
-        });
+                const winrate = ((wr.wins/(wr.wins + wr.losses)) * 100).toFixed(2) - o.cost;
+                return winrate
+              }]).reverse();
 
-        return cards;
-      }}
-    </Query>
+              const cards = cardsArray.map(card => {
+                const image = getCardImageById(card.id);
+                const ex = _filter(this.state.mulligan, { cardId: card.id });
+
+                const winrateData = cardWinrates[card.id];
+                const winrate = this.outputCardWinrate(winrateData);
+              
+                if(ex && ex.length === card.count) {
+                  return false;
+                }
+          
+                return (
+                  <MulliganCardChoice key={card.id} onClick={() => this.handleChooseMulligan(card)}>
+                    <img width="100" src={image} alt={card.name} />
+                    {winrate}
+                  </MulliganCardChoice>
+                );
+              });
+
+              return cards;
+            }}
+          </Query>
+        </MulliganCardList>
+      </div>
+    )
   }
 
   handleChooseMulligan(card) {
@@ -105,47 +185,47 @@ class ChooseMulligan extends React.Component {
     });
   }
 
-  handleChooseOrder(value) {
-    this.setState({
-      mulliganCount: value === 'first' ? 3 : 4
-    });
-  }
+  // handleChooseOrder(value) {
+  //   this.setState({
+  //     mulliganCount: value === 'first' ? 3 : 4
+  //   });
+  // }
 
-  outputOrderVariants() {
-    return (
-      <div>
-        <button onClick={() => this.handleChooseOrder('first')}>First</button>
-        <button onClick={() => this.handleChooseOrder('second')}>Second</button>
-      </div>
-    )
-  }
+  // outputOrderVariants() {
+  //   return (
+  //     <div>
+  //       <button onClick={() => this.handleChooseOrder('first')}>First</button>
+  //       <button onClick={() => this.handleChooseOrder('second')}>Second</button>
+  //     </div>
+  //   )
+  // }
 
   outputMulliganPlaceholders() {
     const placeholders = _times(this.state.mulliganCount, (i) => {
         const card = this.state.mulligan[i];
 
         if ( !card) {
-          return 'Empty';
+          return <MulliganPlaceholder key={i} />;
         }
 
         const cardImage = getCardImageById(card.cardId);
 
         return (
-          <div key={i}>
+          <MulliganChosen key={i}>
             <img src={cardImage} alt={card.cardName} />
-          </div>
+          </MulliganChosen>
         )
     });
 
     return (
-      <div>
+      <MulliganChosenList count={this.state.mulliganCount}>
         {placeholders}
-      </div>
+      </MulliganChosenList>
     )
   }
 
   handleMulliganApprove() {
-    if (this.state.mulligan.length === this.state.mulliganCount) {
+    if (this.state.mulligan.length > 2 && this.state.mulligan.length < 5) {
       this.props.updateGameMulligan({
         variables: { mulligan: this.state.mulligan }
       })
@@ -158,17 +238,16 @@ class ChooseMulligan extends React.Component {
     if ( !currentGame.opponentClass || currentGame.mulligan.length > 0 ) return false;
 
     const cards = this.state.mulliganCount === this.state.mulligan.length ? false : this.outputCardList(currentGame.opponentClass);
-    const order = this.outputOrderVariants();
+    // const order = this.outputOrderVariants();
     const mulliganChosen = this.outputMulliganPlaceholders();
     
     return (
       <div>
-        <p>First or second?:</p>
-        {order}
-        <p>Choose your mulligan:</p>
         {mulliganChosen}
         {cards}
-        <button onClick={this.handleMulliganApprove}>Done</button>
+        <ActionBlock>
+          <LargeButton primary onClick={this.handleMulliganApprove}>Done</LargeButton>
+        </ActionBlock>
       </div>
     );
   }
