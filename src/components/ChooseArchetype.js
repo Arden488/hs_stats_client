@@ -80,7 +80,6 @@ class ChooseArchetype extends React.Component {
       return (
         <ArchetypeItem onClick={() => this.handleChooseArchetype(_id)} key={_id}>
           <h4>{`${name}`}</h4>
-          <p>{key_features}</p>
         </ArchetypeItem>
       )
     });
@@ -128,19 +127,10 @@ class ChooseArchetype extends React.Component {
   getArchetypesCards(archetypes) {
     let cards = [];
 
-    // archetypes.forEach(arch => {
-    //   cards = _sortBy(_uniqBy(_concat(cards, arch.cards), 'dbfId'), ['cost']);
-    // });
-
-    // const archetypesArraysOfCards = [];
-
-    // console.log(archetypes);
-
     archetypes.forEach(deck => {
       const deckData = decodeDeck(deck.code);
       deck.cards = this.fetchDeckCards(deckData.cards, deck);
 
-      // archetypesArraysOfCards.push(deck.cards);
       cards = _concat(cards, deck.cards)
     });
 
@@ -151,8 +141,6 @@ class ChooseArchetype extends React.Component {
     const deckCards = cardsIds.map(card => {
       const cardInfo = getCardById(card[0]);
       cardInfo.count = card[1];
-      // cardInfo.archetypeId = deck._id;
-      // cardInfo.archetypeName = deck.name;
 
       return cardInfo;
     });
@@ -180,23 +168,8 @@ class ChooseArchetype extends React.Component {
     });
   }
 
-  // sortCardsByArchetype(cards) {
-  //   const archs = {};
-
-  //   cards.forEach(item => {
-  //     if ( !archs[item.archetypeId] ) {
-  //       archs[item.archetypeId] = { name: item.archetypeName, cards: [] }
-  //     }
-
-  //     archs[item.archetypeId].cards.push(item);
-  //   })
-
-  //   return cards;
-  // } 
-
   render() {
     const { currentGame } = this.props;
-    console.log('render')
 
     if ( currentGame.mulligan.length < 3 || currentGame.opponentArchetype ) return false;
 
@@ -211,11 +184,10 @@ class ChooseArchetype extends React.Component {
             this.filterArchetypesByIds(data.allArchetypes, this.state.activeArchsIds) : 
             this.filterArchetypesByClass(data.allArchetypes, currentGame.opponentClass);
 
-          // if (filteredArchetypes.length > 1) {
+          if (filteredArchetypes.length > 1) {
             const allCards = this.getArchetypesCards(filteredArchetypes);
-            // const cardsByArchetype = this.sortCardsByArchetype(allCards)
             cards = this.outputAllPlayableCardsByArchetypes(allCards, filteredArchetypes);
-          // }
+          }
 
             return (
               <div>
