@@ -45,7 +45,7 @@ const MulliganChosen = styled.button`
 
 const MulliganCardList = styled.div`
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(3, 1fr);
 `;
 
 const MulliganCardChoice = styled.button`
@@ -184,21 +184,6 @@ class ChooseMulligan extends React.Component {
       mulligan
     });
   }
-
-  // handleChooseOrder(value) {
-  //   this.setState({
-  //     mulliganCount: value === 'first' ? 3 : 4
-  //   });
-  // }
-
-  // outputOrderVariants() {
-  //   return (
-  //     <div>
-  //       <button onClick={() => this.handleChooseOrder('first')}>First</button>
-  //       <button onClick={() => this.handleChooseOrder('second')}>Second</button>
-  //     </div>
-  //   )
-  // }
 
   outputMulliganPlaceholders() {
     const placeholders = _times(this.state.mulliganCount, (i) => {
