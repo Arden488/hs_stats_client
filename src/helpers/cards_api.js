@@ -17,4 +17,8 @@ function getCardImageById(id, size = '256') {
   return `https://art.hearthstonejson.com/v1/render/latest/enUS/${size}x/${id}.png`;
 }
 
-export { getCardById, getCardImageById };
+function getCardTileById(id) {
+  return `https://art.hearthstonejson.com/v1/tiles/${id}.png`;
+}
+
+export { getCardById, getCardImageById, getCardTileById };
