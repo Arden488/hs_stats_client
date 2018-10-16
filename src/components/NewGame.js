@@ -8,6 +8,7 @@ import ChooseArchetype from './ChooseArchetype';
 import ChooseMulligan from './ChooseMulligan';
 import ChooseOutcome from './ChooseOutcome';
 import NewGameSummary from './NewGameSummary';
+import ShowAdvices from './ShowAdvices';
 
 import getCurrentGame from '../graphql/getCurrentGame';
 import getActiveDeck from '../graphql/getActiveDeck';
@@ -40,6 +41,7 @@ class NewGame extends React.Component {
         <ChooseOpponent />
         <ChooseMulligan />
         <ChooseArchetype />
+        <ShowAdvices />
         <ChooseOutcome />
       </div>
     )
