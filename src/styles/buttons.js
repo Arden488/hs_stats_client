@@ -25,9 +25,14 @@ const Button = styled.button`
   }
 `;
 
+const SmallButton = styled(Button)`
+  padding: 0 ${spacers.paddings.x1};
+  margin-left: 10px;
+`;
+
 const LargeButton = styled(Button)`
   padding: ${spacers.paddings.x2} ${spacers.paddings.x3};
   font-size: ${fonts.largeSize};
 `;
 
-export { Button, LargeButton }
+export { Button, LargeButton, SmallButton }
