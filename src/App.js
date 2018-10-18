@@ -1,12 +1,16 @@
 import React, { Component } from 'react';
 import { Query, compose, graphql } from 'react-apollo';
-import './App.css';
-import Decks from './components/Decks';
-import getActiveDeck from './graphql/getActiveDeck';
 import { Link } from 'react-router-dom'
+
+import Decks from './components/Decks';
+import ArchetypesList from './components/ArchetypesList';
+
+import getActiveDeck from './graphql/getActiveDeck';
 import getAllWinrates from './graphql/getAllWinrates';
+
+import './App.css';
 import styled from 'styled-components'
-import { LargeButton } from './styles/buttons';
+import { LargeButton, Button } from './styles/buttons';
 
 const ActiveDeck = styled.section`
   display: grid;
@@ -70,7 +74,7 @@ class App extends Component {
   }
 
   showActiveDeck(deck) {
-    if (!deck.name) return <Decks />
+    if (!deck.name) return <Decks />;
 
     return (
       <ActiveDeck>
@@ -86,6 +90,7 @@ class App extends Component {
               return this.outputTotalWinrate(deck, data.allWinrates);
             }}
           </Query>
+          <Link to="/archs-list"><Button>Show Archetypes</Button></Link>
         </Aside>
       </ActiveDeck>
     )
