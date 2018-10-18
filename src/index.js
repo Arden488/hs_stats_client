@@ -4,7 +4,8 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import './index.css';
 import { BrowserRouter as Router, Route } from 'react-router-dom'
-import NewGame from './components/NewGame.js';
+import NewGame from './components/NewGame';
+import ArchetypesList from './components/ArchetypesList';
 import App from './App';
 import * as serviceWorker from './serviceWorker';
 import { Wrapper } from './styles/layouts';
@@ -76,6 +77,7 @@ const render = Component => {
         <Wrapper>
           <Route exact path="/" component={App} />
           <Route path="/new-game" component={NewGame} />
+          <Route path="/archs-list" component={ArchetypesList} />
         </Wrapper>
       </Router>
     </ApolloProvider>, 
