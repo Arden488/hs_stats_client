@@ -4,7 +4,6 @@ import { withRouter, Redirect } from "react-router-dom";
 import { compose, graphql } from 'react-apollo';
 
 import ChooseOpponent from './ChooseOpponent';
-import ChooseArchetype from './ChooseArchetype';
 import ChooseMulligan from './ChooseMulligan';
 import ChooseOutcome from './ChooseOutcome';
 import NewGameSummary from './NewGameSummary';
@@ -40,7 +39,6 @@ class NewGame extends React.Component {
         <NewGameSummary />
         <ChooseOpponent />
         <ChooseMulligan />
-        <ChooseArchetype />
         <ShowAdvices />
         <ChooseOutcome />
       </div>
