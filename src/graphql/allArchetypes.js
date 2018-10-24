@@ -6,6 +6,13 @@ export default gql` {
     name,
     charClass,
     code,
-    key_features
+    key_features,
+    cards {
+      cost, 
+      dbfId, 
+      id, 
+      name, 
+      type
+    }
   }
 }`;
