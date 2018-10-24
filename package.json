@@ -4,9 +4,7 @@
   "private": true,
   "dependencies": {
     "apollo-boost": "^0.1.16",
-    "deckstrings": "^2.0.0",
     "graphql": "^14.0.2",
-    "hearthstonejson-client": "^0.8.4",
     "lodash": "^4.17.11",
     "react": "^16.5.2",
     "react-apollo": "^2.2.4",
