@@ -127,18 +127,7 @@ class ShowAdvices extends React.Component {
   }
 
   outputAllCardsByArchetype(cards) {
-    this.state.playedCards.forEach(pc => {
-      const i = _findIndex(cards, { 'id': pc.id })
-      
-      if (cards[i].count === 2) {
-        cards[i].count = 1;
-      } else {
-        cards.splice(i, 1);
-      }
-    })
-
     cards = _sortBy(cards, ['cost']);
-
     const cardsByGroup = _groupBy(cards, 'type');
 
     return (
@@ -150,10 +139,16 @@ class ShowAdvices extends React.Component {
 
   handleChooseCard(card) {
     const newArr = this.state.playedCards;
+    let cards = this.state.activeCards;
     newArr.push(card);
 
+    const archetypes = this.updateActualArchetypes(newArr)
+    cards = this.updateActiveCards(archetypes, newArr)
+
     this.setState({
-      playedCards: newArr
+      playedCards: newArr,
+      activeCards: cards,
+      archetypes
     });
   }
 
@@ -253,8 +248,8 @@ class ShowAdvices extends React.Component {
   }
 
   outputOpponentGameInfo() {
-    const playedCards = this.state.playedCards.map(card => {
-      return <span>{card.name}</span>
+    const playedCards = this.state.playedCards.map((card, i) => {
+      return <span key={i}>{card.name}</span>
     })
     
     return (
@@ -268,25 +263,61 @@ class ShowAdvices extends React.Component {
     )
   }
 
-  componentDidUpdate() {
-    console.log('Show Advices componentDidUpdate')
+  updateActiveCards(archetypes, playedCards) {
+    let cards = [];
+
+    archetypes.forEach(arch => {
+      cards = arch.cards.concat(cards)
+    })
+
+    cards = _uniqBy(cards, 'id');
+
+    playedCards.forEach(card => {
+      const i = _findIndex(cards, { 'id': card.id })
+      
+      if (cards[i]) {
+        if (cards[i].count === 2) {
+          cards[i].count = 1;
+        } else {
+          cards.splice(i, 1);
+        }
+      }
+    })
+
+    return cards;
+  }
+
+  componentDidUpdate(prevProps, prevState, snapshot) {
+    if(this.props.archetypes === prevProps.archetypes && this.state.archetypes.length === 0) {
+      const newArchetypes = _filter(this.props.archetypes, { charClass: this.props.currentGame.opponentClass });
+      const newCards = this.updateActiveCards(newArchetypes, this.state.playedCards);
+
+      this.setState({
+        archetypes: newArchetypes,
+        activeCards: newCards
+      })
+    }
   }
 
   outputExpectedArchetypes(archetypes) {
-    const archs = [];
+    let archs = [];
     const matches = {};
+    archs = archetypes;
+
     archetypes.forEach((el, i) => {
       const v = el.name.search(/v[0-9]+/g);
-      let x = el.name;
+      let x = el;
       if (v !== -1) {
-        x = el.name.slice(0, v-1);
+        x.name = x.name.slice(0, v-1);
       }
 
-      if (archs.indexOf(x) === -1) {
-        archs.push(el)
+      const index = _findIndex(archs, { name: x.name });
+
+      if (index === -1) {
+        archs.push(x)
       } else {
-        if (!matches[i]) { matches[i] = 1 }
-        matches[i] = matches[i]+1;
+        if (!matches[index]) { matches[index] = 1 }
+        matches[index] = matches[index] + 1;
       }
     });
 
@@ -295,50 +326,47 @@ class ShowAdvices extends React.Component {
         <h4>Expected archetypes:</h4>
         {archs.map((a, i) => {
           return (
-            <p><strong>{a.name}</strong> {matches[i] && <span>({matches[i]} sim.)</span>}<br />{a.key_features}</p>
+            <p key={i}><strong>{a.name}</strong> {matches[i] && <span>({matches[i]} sim.)</span>}<br />{a.key_features}</p>
           )
         })}
       </div>
     )
   }
 
-  updateActualArchetypes(cards, archetypes) {
+  updateActualArchetypes(cards) {
+    const archetypes = this.state.archetypes;
+    const leftArchetypes = [];
+
     archetypes.forEach((arch, index) => {
       if (cards.length > 0) {
+        let av = true;
         cards.forEach(c => {
           const i = _findIndex(arch.cards, { 'id': c.id })
           if (i === -1) {
-            archetypes.splice(index, 1)
+            av = false
           }
         })
+        if (av) {
+          leftArchetypes.push(arch);
+        }
       }
     })
 
-    return archetypes
+    if (archetypes.length === 0) {
+      alert('NO ACTIVE ARCHETYPES')
+    }
+
+    return leftArchetypes
   }
 
   render() {
     const { currentGame } = this.props;
 
     if ( !currentGame.opponentClass || currentGame.mulligan.length < 3 || currentGame.outcome ) return false;
-    
-    this.archetypes = _filter(this.props.archetypes, { charClass: currentGame.opponentClass })
-    let cardsList;
-    let cards = [];
 
-    this.archetypes.forEach(arch => {
-      console.log('Show Advices render foreach')
-      cards = arch.cards.concat(cards)
-    })
-
-    cards = _uniqBy(cards, 'id');
-
-    cardsList = this.outputAllCardsByArchetype(cards);
+    const cardsList = this.outputAllCardsByArchetype(this.state.activeCards);
     const opponentInfo = this.outputOpponentGameInfo();
-    this.archetypes = this.updateActualArchetypes(this.state.playedCards, this.archetypes);
-    const expectedArchetypes = this.outputExpectedArchetypes(this.archetypes);
-
-    console.log(this.archetypes)
+    const expectedArchetypes = this.outputExpectedArchetypes(this.state.archetypes);
 
     return (
       <div>
@@ -347,29 +375,10 @@ class ShowAdvices extends React.Component {
         {cardsList}
       </div>
     )
-    
-    // return <Query query={getArchetypesByClass} variables={{ charClass: currentGame.opponentClass }}>
-    //   {({ loading, error, data, client }) => {
-    //     if (loading) return <p>Loading...</p>;
-    //     if (error) return <p>Error: {error}</p>;
-
-    //     console.log(archetypes);
-    //     console.log('start fetchAllCards: 0/' + data.getArchetypeByClass.length);
-
-    //     // const opponentGameInfo = this.outputOpponentGameInfo();
-    //     if ( archetypes === null ) {
-    //       archetypes = this.fetchAllCards(data.getArchetypeByClass);
-    //       console.log(archetypes);
-    //     }
-    //     // this.setState(archetypes);
-    //     // const archetypeInfo = this.outputArchetypeInfo(data.getArchetype);
-    //   }}
-    // </Query>
   }
 }
 
 export default compose(
-  // graphql(getArchetypesByClass, { name: 'getArchetypesByClass' }),
   graphql(getCurrentGame, {
     props: ({ data: { currentGame } }) => ({
       currentGame
