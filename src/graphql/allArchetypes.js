@@ -8,7 +8,8 @@ export default gql` {
     code,
     key_features,
     cards {
-      cost, 
+      cost,
+      count, 
       dbfId, 
       id, 
       name, 
