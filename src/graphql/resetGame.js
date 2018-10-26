@@ -4,7 +4,7 @@ export default gql`
   mutation {
     resetGame @client {
       opponentClass,
-      opponentArchetype,
+      opponentDeck,
       mulligan {
         cardId,
         cardName,

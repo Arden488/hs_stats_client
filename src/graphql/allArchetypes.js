@@ -5,15 +5,6 @@ export default gql` {
     _id,
     name,
     charClass,
-    code,
-    key_features,
-    cards {
-      cost,
-      count, 
-      dbfId, 
-      id, 
-      name, 
-      type
-    }
+    key_features
   }
 }`;

@@ -5,7 +5,7 @@ export default gql` {
     _id,
     deckId,
     opponentClass,
-    opponentArchetypeId,
+    opponentDeckId,
     wins,
     losses,
     games,

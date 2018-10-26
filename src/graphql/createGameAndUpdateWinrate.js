@@ -4,14 +4,14 @@ export default gql`
   mutation createGameAndUpdateWinrate(
     $deckId: String!, 
     $opponentClass: String!, 
-    $opponentArchetype: String!, 
+    $opponentDeck: String!, 
     $outcome: String!,
     $mulligan: [WinrateCardInput]
   ) {
     createGame(
       deckId: $deckId, 
       opponentClass: $opponentClass, 
-      opponentArchetype: $opponentArchetype, 
+      opponentDeck: $opponentDeck, 
       outcome: $outcome
     ) {
       _id
@@ -19,7 +19,7 @@ export default gql`
     updateWinrate(
       deckId: $deckId,
       opponentClass: $opponentClass, 
-      opponentArchetype: $opponentArchetype,
+      opponentDeck: $opponentDeck,
       outcome: $outcome,
       cards: $mulligan
     ) {
