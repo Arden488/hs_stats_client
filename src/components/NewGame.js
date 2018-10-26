@@ -11,7 +11,7 @@ import ShowAdvices from './ShowAdvices';
 
 import getCurrentGame from '../graphql/getCurrentGame';
 import getActiveDeck from '../graphql/getActiveDeck';
-import allArchetypes from '../graphql/allArchetypes';
+import allOppDecks from '../graphql/allOppDecks';
 
 class NewGame extends React.Component {
   constructor(props) {
@@ -37,7 +37,7 @@ class NewGame extends React.Component {
 
     
 
-    return <Query query={allArchetypes}>
+    return <Query query={allOppDecks}>
       {({ loading, error, data, client }) => {
         if (loading) return <p>Loading...</p>;
         if (error) return <p>Error: {error}</p>;
@@ -47,7 +47,7 @@ class NewGame extends React.Component {
             <NewGameSummary />
             <ChooseOpponent />
             <ChooseMulligan />
-            <ShowAdvices archetypes={data.allArchetypes} />
+            <ShowAdvices archetypes={data.allOppDecks} />
             <ChooseOutcome />
           </div>
         );

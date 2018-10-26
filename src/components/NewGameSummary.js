@@ -4,7 +4,7 @@ import { Mutation, Query, compose, graphql } from 'react-apollo';
 import { uniqBy as _uniqBy } from 'lodash';
 
 import getCurrentGame from '../graphql/getCurrentGame';
-import getArchetype from '../graphql/getArchetype';
+import getOppDeck from '../graphql/getOppDeck';
 import createGameAndUpdateWinrate from '../graphql/createGameAndUpdateWinrate';
 import { getData } from '../helpers/storage_utils';
 import resetGame from '../graphql/resetGame';
@@ -65,24 +65,24 @@ class NewGameSummary extends React.Component {
     )
   }
 
-  outputArchetype(archetype) {
-    if ( !archetype ) {
+  outputOppDeck(deck) {
+    if ( !deck ) {
       return <span>Empty</span>;
     }
 
     return (
       <Query
-        query={getArchetype}
-        variables={{ id: archetype }}
+        query={getOppDeck}
+        variables={{ id: deck }}
       >
         {({ loading, error, data }) => {
           if (loading) return <span>Loading...</span>;
           if (error) return `Error!: ${error}`;
 
-          this.archetype = data.getArchetype.name;
+          this.archetype = data.getOppDeck.name;
 
           return (
-            <span>{data.getArchetype.name}</span>
+            <span>{data.getOppDeck.name}</span>
           );
         }}
       </Query>
@@ -90,7 +90,7 @@ class NewGameSummary extends React.Component {
   }
 
   outputSaveButton(game) {
-    if ( !game.opponentClass || !game.opponentArchetype || !game.outcome || game.mulligan.length < 3 ) {
+    if ( !game.opponentClass || !game.opponentDeck || !game.outcome || game.mulligan.length < 3 ) {
       return null;
     }
 
@@ -120,7 +120,7 @@ class NewGameSummary extends React.Component {
                   createGameAndUpdateWinrate({ variables: { 
                     deckId,  
                     opponentClass: game.opponentClass, 
-                    opponentArchetype: game.opponentArchetype, 
+                    opponentDeck: game.opponentDeck, 
                     outcome: game.outcome,
                     mulligan: mulligan
                   } });
@@ -168,7 +168,7 @@ class NewGameSummary extends React.Component {
     const SaveButton = this.outputSaveButton(currentGame);
     let chosenClass = 'Choose class to see information';
     let chosenMulligan = '';
-    let chosenArchetype = '';
+    let chosenOppDeck = '';
     let chosenOutcome = '';
 
     if (currentGame.opponentClass) {
@@ -182,9 +182,9 @@ class NewGameSummary extends React.Component {
       chosenMulligan = <p><strong>Mulligan:</strong> {mulligan}</p>;
     }
 
-    if (currentGame.opponentArchetype) {
-      const Archetype = this.outputArchetype(currentGame.opponentArchetype);
-      chosenArchetype = <p><strong>Opponent archetype:</strong> {Archetype}</p>;
+    if (currentGame.opponentDeck) {
+      const OppDeck = this.outputOppDeck(currentGame.opponentDeck);
+      chosenOppDeck = <p><strong>Opponent archetype:</strong> {OppDeck}</p>;
     }
 
     if (currentGame.outcome) {
@@ -201,7 +201,7 @@ class NewGameSummary extends React.Component {
         <GameSummaryContent>
           {chosenClass}
           {chosenMulligan}
-          {chosenArchetype}
+          {chosenOppDeck}
           {chosenOutcome}
 
           {SaveButton}
