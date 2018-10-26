@@ -90,7 +90,7 @@ class App extends Component {
               return this.outputTotalWinrate(deck, data.allWinrates);
             }}
           </Query>
-          <Link to="/archs-list"><Button>Show Archetypes</Button></Link>
+          <Link to="/decks-list"><Button>Show Decks</Button></Link>
         </Aside>
       </ActiveDeck>
     )
