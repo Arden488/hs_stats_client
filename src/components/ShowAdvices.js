@@ -16,7 +16,7 @@ import {
 } from 'lodash';
 
 import styled from 'styled-components'
-import getArchetypesByClass from '../graphql/getArchetypesByClass';
+import getOppDecksByClass from '../graphql/getOppDecksByClass';
 import { colors, spacers } from '../styles/vars';
 import { SmallButton } from '../styles/buttons';
 
@@ -117,7 +117,7 @@ class ShowAdvices extends React.Component {
     super(props);
 
     this.state = {
-      archetypes: [],
+      decks: [],
       playedCards: [],
       opponentMana: 0,
       activeCards: []
@@ -126,7 +126,7 @@ class ShowAdvices extends React.Component {
     this.increaseMana = this.increaseMana.bind(this);
   }
 
-  outputAllCardsByArchetype(cards) {
+  outputAllCardsByDeck(cards) {
     cards = _sortBy(cards, ['cost']);
     const cardsByGroup = _groupBy(cards, 'type');
 
@@ -142,13 +142,13 @@ class ShowAdvices extends React.Component {
     let cards = this.state.activeCards;
     newArr.push(card);
 
-    const archetypes = this.updateActualArchetypes(newArr)
-    cards = this.updateActiveCards(archetypes, newArr)
+    const decks = this.updateActualDecks(newArr)
+    cards = this.updateActiveCards(decks, newArr)
 
     this.setState({
       playedCards: newArr,
       activeCards: cards,
-      archetypes
+      decks
     });
   }
 
@@ -230,11 +230,11 @@ class ShowAdvices extends React.Component {
     })
   }
 
-  outputArchetypeInfo(archetype) {
+  outputDeckInfo(deck) {
     return (
       <div>
-        <h3>{archetype.name}</h3>
-        <p>{archetype.key_features}</p>
+        <h3>{deck.name}</h3>
+        <p>{deck.key_features}</p>
       </div>
     )
   }
@@ -263,10 +263,10 @@ class ShowAdvices extends React.Component {
     )
   }
 
-  updateActiveCards(archetypes, playedCards) {
+  updateActiveCards(decks, playedCards) {
     let cards = [];
 
-    archetypes.forEach(arch => {
+    decks.forEach(arch => {
       cards = arch.cards.concat(cards)
     })
 
@@ -288,33 +288,33 @@ class ShowAdvices extends React.Component {
   }
 
   componentDidUpdate(prevProps, prevState, snapshot) {
-    if(this.props.archetypes === prevProps.archetypes && this.state.archetypes.length === 0) {
-      const newArchetypes = _filter(this.props.archetypes, { charClass: this.props.currentGame.opponentClass });
-      const newCards = this.updateActiveCards(newArchetypes, this.state.playedCards);
+    if(this.props.decks === prevProps.decks && this.state.decks.length === 0) {
+      const newDecks = _filter(this.props.decks, { charClass: this.props.currentGame.opponentClass });
+      const newCards = this.updateActiveCards(newDecks, this.state.playedCards);
 
       this.setState({
-        archetypes: newArchetypes,
+        archetypes: newDecks,
         activeCards: newCards
       })
     }
   }
 
-  outputExpectedArchetypes(archetypes) {
-    let archs = [];
+  outputExpectedArchetypes(decks) {
+    let dcks = [];
     const matches = {};
-    archs = archetypes;
+    dcks = decks;
 
-    archetypes.forEach((el, i) => {
+    decks.forEach((el, i) => {
       const v = el.name.search(/v[0-9]+/g);
       let x = el;
       if (v !== -1) {
         x.name = x.name.slice(0, v-1);
       }
 
-      const index = _findIndex(archs, { name: x.name });
+      const index = _findIndex(dcks, { name: x.name });
 
       if (index === -1) {
-        archs.push(x)
+        dcks.push(x)
       } else {
         if (!matches[index]) { matches[index] = 1 }
         matches[index] = matches[index] + 1;
@@ -323,8 +323,8 @@ class ShowAdvices extends React.Component {
 
     return (
       <div>
-        <h4>Expected archetypes:</h4>
-        {archs.map((a, i) => {
+        <h4>Expected decks:</h4>
+        {dcks.map((a, i) => {
           return (
             <p key={i}><strong>{a.name}</strong> {matches[i] && <span>({matches[i]} sim.)</span>}<br />{a.key_features}</p>
           )
@@ -333,30 +333,30 @@ class ShowAdvices extends React.Component {
     )
   }
 
-  updateActualArchetypes(cards) {
-    const archetypes = this.state.archetypes;
-    const leftArchetypes = [];
+  updateActualDecks(cards) {
+    const decks = this.state.decks;
+    const leftDecks = [];
 
-    archetypes.forEach((arch, index) => {
+    decks.forEach((dck, index) => {
       if (cards.length > 0) {
         let av = true;
         cards.forEach(c => {
-          const i = _findIndex(arch.cards, { 'id': c.id })
+          const i = _findIndex(dck.cards, { 'id': c.id })
           if (i === -1) {
             av = false
           }
         })
         if (av) {
-          leftArchetypes.push(arch);
+          leftDecks.push(dck);
         }
       }
     })
 
-    if (archetypes.length === 0) {
-      alert('NO ACTIVE ARCHETYPES')
+    if (decks.length === 0) {
+      alert('NO ACTIVE DECKS')
     }
 
-    return leftArchetypes
+    return leftDecks
   }
 
   render() {
@@ -364,13 +364,13 @@ class ShowAdvices extends React.Component {
 
     if ( !currentGame.opponentClass || currentGame.mulligan.length < 3 || currentGame.outcome ) return false;
 
-    const cardsList = this.outputAllCardsByArchetype(this.state.activeCards);
+    const cardsList = this.outputAllCardsByDeck(this.state.activeCards);
     const opponentInfo = this.outputOpponentGameInfo();
-    const expectedArchetypes = this.outputExpectedArchetypes(this.state.archetypes);
+    const expectedDecks = this.outputExpectedDecks(this.state.decks);
 
     return (
       <div>
-        {expectedArchetypes}
+        {expectedDecks}
         {opponentInfo}
         {cardsList}
       </div>
