@@ -11,17 +11,44 @@ import {
   map as _map, 
   filter as _filter,
   findIndex as _findIndex,
+  find as _find,
   sortBy as _sortBy,
   uniqBy as _uniqBy
 } from 'lodash';
 
 import styled from 'styled-components'
-import getOppDecksByClass from '../graphql/getOppDecksByClass';
-import { colors, spacers } from '../styles/vars';
+import updateGameOpponentDeck from '../graphql/updateGameOpponentDeck';
+import { colors, spacers, borders, fonts } from '../styles/vars';
 import { SmallButton } from '../styles/buttons';
 
-const CardList = styled.div`
+const CardList = styled.div``;
 
+const DeckVariant = styled.div`
+  display: inline-block;
+  position: relative;
+  vertical-align: top;
+  cursor: pointer;
+  background-color: ${colors.elementsBg};
+  padding: ${spacers.paddings.x1};
+  padding-right: ${spacers.baseSpacer * 4}px;
+  margin-right: ${spacers.margins.x1};
+  margin-bottom: ${spacers.margins.x1};
+  border-radius: ${borders.borderRadius};
+
+  span {
+    position: absolute;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    padding: ${spacers.paddings.x1};
+    border-radius: ${borders.borderRadius};
+    background: ${colors.primary};
+  }
+
+  p {
+    margin: 10px 0 0;
+    font-size: ${fonts.extraSmallSize}
+  }
 `;
 
 const CardChoice = styled.button`
@@ -35,9 +62,10 @@ const CardChoice = styled.button`
   border: 0;  
   padding: 0;
   margin-bottom: ${spacers.margins.x1};
+  margin-right: ${spacers.margins.x2};
   color: ${colors.text};
   text-align: left;
-  width: 50%;
+  width: 150px;
   height: 268px;
 
   :focus {
@@ -66,7 +94,7 @@ const CardChoiceCount = styled.span`
   height: 10px;
   position: absolute;
   top: 0;
-  left: -10px;
+  left: 30px;
   text-align: center;
 `;
 
@@ -101,7 +129,7 @@ const CardChoiceRace = styled.span`
 const CardChoiceName = styled.span`
   font-size: 8px;
   position: absolute;
-  left: 60%;
+  left: 40px;
   top: 2px;
   max-width: 40%;
   overflow: hidden;
@@ -293,51 +321,80 @@ class ShowAdvices extends React.Component {
       const newCards = this.updateActiveCards(newDecks, this.state.playedCards);
 
       this.setState({
-        archetypes: newDecks,
+        decks: newDecks,
         activeCards: newCards
       })
     }
   }
 
-  outputExpectedArchetypes(decks) {
-    let dcks = [];
-    const matches = {};
-    dcks = decks;
-
-    decks.forEach((el, i) => {
-      const v = el.name.search(/v[0-9]+/g);
-      let x = el;
-      if (v !== -1) {
-        x.name = x.name.slice(0, v-1);
-      }
-
-      const index = _findIndex(dcks, { name: x.name });
-
-      if (index === -1) {
-        dcks.push(x)
-      } else {
-        if (!matches[index]) { matches[index] = 1 }
-        matches[index] = matches[index] + 1;
-      }
+  outputExpectedDecks(decks) {
+    const groups = _groupBy(decks, (v) => {
+      return v.archetypeId.name
     });
+
+    if (this.props.currentGame.opponentDeck) {
+      return (
+        <div>
+          <h4>Selected deck:</h4>
+          <h5>{this.state.decks[0].name}</h5>
+          <p>{this.state.decks[0].key_features}</p>
+        </div>
+      )
+    }
 
     return (
       <div>
         <h4>Expected decks:</h4>
-        {dcks.map((a, i) => {
-          return (
-            <p key={i}><strong>{a.name}</strong> {matches[i] && <span>({matches[i]} sim.)</span>}<br />{a.key_features}</p>
-          )
+        {Object.keys(groups).map((key) => {
+          const group = groups[key];
+          let output = (
+            <DeckVariant key={key}>
+              {key}
+              <span>{group.length}</span>
+              {group[0].archetypeId.key_features && <p>{group[0].archetypeId.key_features}</p>}
+            </DeckVariant>
+          );
+
+          if (group.length <= 3) {
+            output = group.map(deck => {
+              return (
+                <DeckVariant 
+                  onClick={() => this.handleChooseOppDeck(deck._id)}
+                  key={deck._id}>
+                  {deck.name}
+                  {deck.key_features && <p>{deck.key_features}</p>}
+                </DeckVariant>
+              )
+            })
+          }
+
+          return output;
         })}
       </div>
     )
+  }
+
+  handleChooseOppDeck(id) {
+    const deck = _find(this.state.decks, { '_id': id })
+    const cards = this.updateActiveCards([deck], this.state.playedCards)
+
+    console.log(cards)
+
+    this.setState({
+      decks: [deck],
+      activeCards: cards
+    });
+    
+    this.props.updateGameOpponentDeck({
+      variables: { opponentDeck: id }
+    })
   }
 
   updateActualDecks(cards) {
     const decks = this.state.decks;
     const leftDecks = [];
 
-    decks.forEach((dck, index) => {
+    decks.forEach((dck) => {
       if (cards.length > 0) {
         let av = true;
         cards.forEach(c => {
@@ -379,6 +436,7 @@ class ShowAdvices extends React.Component {
 }
 
 export default compose(
+  graphql(updateGameOpponentDeck, { name: 'updateGameOpponentDeck' }),
   graphql(getCurrentGame, {
     props: ({ data: { currentGame } }) => ({
       currentGame
