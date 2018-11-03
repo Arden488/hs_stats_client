@@ -1,38 +1,23 @@
 import React from 'react';
 import { Query, Mutation } from "react-apollo";
-import getArchetype from '../graphql/getArchetype';
-import createArchetype from '../graphql/createArchetype';
 import gql from "graphql-tag";
 import { 
   groupBy as _groupBy, 
   map as _map,
-  findIndex as _findIndex,
   sortBy as _sortBy
 } from 'lodash';
-import { decodeDeck } from '../helpers/deck_codes_utils';
-import { getCardImageById } from '../helpers/cards_api';
-import { getCardById } from '../helpers/cards_api';
+
+import allArchetypes from '../graphql/allArchetypes';
+import getArchetype from '../graphql/getArchetype';
+import createArchetype from '../graphql/createArchetype';
+import updateArchetype from '../graphql/updateArchetype';
 
 import styled from 'styled-components'
 import { Button, LargeButton } from '../styles/buttons';
 
-const CardList = styled.div`
-  display:grid;
-  grid-template-columns: repeat(2, 1fr);
-  grid-column-gap: 20px;
-  margin-bottom: 40px;
-`;
-
-const Card = styled.div`
-  text-align: center;
-
-  img {
-    max-width: 100%;
-  }
-`;
-
-const NewArchetypeForm = styled.form`
+const DeckForm = styled.form`
   input[type=text],
+  select,
   textarea {
     display: block;
     margin-bottom: 10px;
@@ -43,7 +28,7 @@ const NewArchetypeForm = styled.form`
   }
 `;
 
-const ChooseArchetypeButton = styled(Button)`
+const ChooseOppDeckButton = styled(Button)`
   margin-bottom: 5px;
   margin-right: 5px;
 `;
@@ -60,98 +45,20 @@ class ArchetypesList extends React.Component {
       activeArchetype: null,
       form: {
         name: '',
-        code: '',
         key_features: '',
         charClass: ''
       },
-      newFormOpen: false
+      formOpen: false
     }
 
     this.resetActiveArchetype = this.resetActiveArchetype.bind(this);
-    this.handleOpenNewForm = this.handleOpenNewForm.bind(this);
+    this.handleOpenForm = this.handleOpenForm.bind(this);
     this.handleInputChange = this.handleInputChange.bind(this);
   }
 
-  outArchetypesByClasses(archetypes) {
-    const byClasses = _groupBy(archetypes, 'charClass');
-    
-    return _map(byClasses, (archs, charClass) => {
-      return (
-        <div key={charClass}>
-          <GroupHeading>{`${charClass}`}</GroupHeading>
-          {this.outputArchetypes(archs)}
-        </div>
-      )
-    })
-  }
-
-  fetchDeckCards(cardsIds) {
-    const deckCards = cardsIds.map(card => {
-      const cardInfo = getCardById(card[0]);
-      cardInfo.count = card[1];
-
-      return cardInfo;
-    });
-
-    return deckCards;
-  }
-
-  outputAllCardsByArchetype(code) {
-    const deckData = decodeDeck(code);
-    let cards = this.fetchDeckCards(deckData.cards);
-
-    cards = _sortBy(cards, ['cost']);
-
-    const cardsOutput = this.outputCardList(cards);
-
-    return (
-      <CardList>
-        {cardsOutput}
-      </CardList>
-    )
-  }
-
-  outputCardList(cards) {
-    return cards.map(card => {
-      const image = getCardImageById(card.id);
-
-      return <Card key={card.id}>
-        <img src={image} alt={card.name} />
-        <span>{card.name}</span>
-      </Card>
-    })
-  }
-
-  outputArchetypeInfo(archetype) {
-    return (
-      <div>
-        <h2>{archetype.name}</h2>
-        <p>{archetype.key_features}</p>
-      </div>
-    )
-  }
-
-  outputArchetypeDetails(arch) {
-    const cards = this.outputAllCardsByArchetype(arch.code);
-    const archetypeInfo = this.outputArchetypeInfo(arch);
-
-    return (
-      <div>
-        {archetypeInfo}
-        <p>
-          <LargeButton onClick={this.resetActiveArchetype}>Back</LargeButton>
-        </p>
-        {cards}
-        <p>
-          <LargeButton onClick={this.resetActiveArchetype}>Back</LargeButton>
-        </p>
-      </div>
-    )
-  }
-
-  handleOpenNewForm() {
+  handleOpenForm() {
     this.setState({
-      newFormOpen: true
+      formOpen: true
     })
   }
 
@@ -162,48 +69,85 @@ class ArchetypesList extends React.Component {
     this.setState(newState);
   }
 
-  outputForm() {
+  outputForm(type, archData) {
+    const mutationType = type === 'create' ? createArchetype : updateArchetype;
+    const mutationTypeName = mutationType.definitions[0].name.value;
+
     return <Mutation 
-      mutation={createArchetype}
+      mutation={mutationType}
       refetchQueries={['allArchetypes']}
     >
-      {(createArchetype, { loading, error, data, client }) => {
-        if (data && data.createArchetype._id) {
+      {(mutation, { loading, error, data, client }) => {
+        if (data && data[mutationTypeName] && data[mutationTypeName]._id) {
           this.setState({
-            newFormOpen: false
+            formOpen: false
           })
         }
+
+        const variables = {};
+
+        if (type === 'update') {
+          variables.id = this.state.activeArchetype
+        }
+
+        variables.name = this.state.form.name;
+        variables.key_features = this.state.form.key_features;
+        variables.charClass = this.state.form.charClass;
         
         return (
-          <NewArchetypeForm 
+          <DeckForm 
             onSubmit={e => {
               e.preventDefault();
-              createArchetype({ variables: { 
-                name: this.state.form.name,
-                code: this.state.form.code,
-                key_features: this.state.form.key_features,
-                charClass: this.state.form.charClass
-              } });
+              mutation({ variables });
             }}
           >
-            <h3>New archetype</h3>
+            <h3>{type === 'create' ? 'New deck' : `Edit deck '${archData.name}'`}</h3>
             <input placeholder="Name" type="text" name="name" value={this.state.form.name} onChange={this.handleInputChange} />
-            <input placeholder="Code" type="text" name="code" value={this.state.form.code} onChange={this.handleInputChange} />
             <input placeholder="Class" type="text" name="charClass" value={this.state.form.charClass} onChange={this.handleInputChange} />
             <textarea placeholder="Key features" name="key_features" value={this.state.form.key_features} onChange={this.handleInputChange} />
-            <Button type="submit">Save game</Button>
+            <Button type="submit">Save archetype</Button>
             {loading && <p>Loading...</p>}
             {error && <p>Error :( Please try again</p>}
-          </NewArchetypeForm>
+          </DeckForm>
         )
       }}
     </Mutation>;
   }
+ 
+  addForm(type, archData) {
+    return this.state.formOpen ? 
+      this.outputForm(type, archData) : '';
+      
+  }
 
-  addNewForm() {
-    return this.state.newFormOpen ? 
-      <div>{this.outputForm()}</div> :
-      <p><LargeButton onClick={this.handleOpenNewForm}>Add new</LargeButton></p>
+  outputArchetypeInfo(archetype) {
+    return (
+      <div>
+        <h2>{archetype.name}</h2>
+        <p>{archetype.charClass}</p>
+        <p>{archetype.key_features}</p>
+      </div>
+    )
+  }
+
+  outputArchetypeDetails(arch) {
+    const archetypeInfo = this.outputArchetypeInfo(arch);
+
+    return (
+      <div>
+        {archetypeInfo}
+        <p>
+          <LargeButton onClick={this.resetActiveArchetype}>Back</LargeButton>
+        </p>
+        <div>
+          {this.addForm('update', arch)}
+          {this.state.formOpen ? '' : <Button onClick={this.handleOpenForm}>Edit deck</Button>}
+        </div>
+        <p>
+          <LargeButton onClick={this.resetActiveArchetype}>Back</LargeButton>
+        </p>
+      </div>
+    )
   }
 
   showArchetypeDetails(id) {
@@ -226,28 +170,53 @@ class ArchetypesList extends React.Component {
     )
   }
 
-  selectActiveArchetype(id) {
+  selectActiveArchetype(deck) {
+    console.log(deck)
     this.setState({
-      activeArchetype: id
+      activeArchetype: deck._id,
+      form: {
+        name: deck.name,
+        charClass: deck.charClass,
+        key_features: deck.key_features
+      }
     })
   }
 
   resetActiveArchetype() {
     this.setState({
-      activeArchetype: null
+      formOpen: false,
+      activeArchetype: null,
+      form: {
+        name: '',
+        key_features: '',
+        charClass: ''
+      }
     })
   }
 
-  outputArchetypes(archs) {
-    return archs.map(arch => {
+  outputArchetypes(archetypes) {
+    return archetypes.map(archetype => {
       return (
-        <ChooseArchetypeButton
-          onClick={() => this.selectActiveArchetype(arch._id)} 
-          key={arch._id}
+        <ChooseOppDeckButton
+          onClick={() => this.selectActiveArchetype(archetype)} 
+          key={archetype._id}
         >
-          {arch.name}
-        </ChooseArchetypeButton>
+          {archetype.name}
+        </ChooseOppDeckButton>
       );
+    })
+  }
+
+  outputArchetypesByClasses(archetypes) {
+    const byClasses = _groupBy(archetypes, 'charClass');
+    
+    return _map(byClasses, (archs, charClass) => {
+      return (
+        <div key={charClass}>
+          <GroupHeading>{`${charClass}`}</GroupHeading>
+          {this.outputArchetypes(archs)}
+        </div>
+      )
     })
   }
 
@@ -259,7 +228,8 @@ class ArchetypesList extends React.Component {
             allArchetypes {
               _id,
               name,
-              charClass
+              charClass,
+              key_features
             }
           }
         `}
@@ -270,8 +240,11 @@ class ArchetypesList extends React.Component {
 
           return (
             <div>
-              {this.outArchetypesByClasses(data.allArchetypes)}
-              {this.addNewForm()}
+              {this.outputArchetypesByClasses(data.allArchetypes)}
+              {this.addForm('create', null)}
+              <p>
+                <LargeButton onClick={this.handleOpenForm}>Add new archetype</LargeButton>
+              </p>
             </div>
           )
         }}
@@ -286,4 +259,4 @@ class ArchetypesList extends React.Component {
   }
 }
 
-export default ArchetypesList;
+export default ArchetypesList
