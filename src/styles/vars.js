@@ -28,6 +28,7 @@ const fonts = {
   size: '16px',
   largeSize: '24px',
   smallSize: '14px',
+  extraSmallSize: '10px',
   lineHeight: '1.3',
   largeLineHeight: '1.8',
   smallLineHeight: '1'
