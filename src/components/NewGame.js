@@ -35,8 +35,6 @@ class NewGame extends React.Component {
       return <div><Redirect to={`/`} /></div>;
     }
 
-    
-
     return <Query query={allOppDecks}>
       {({ loading, error, data, client }) => {
         if (loading) return <p>Loading...</p>;
@@ -47,7 +45,7 @@ class NewGame extends React.Component {
             <NewGameSummary />
             <ChooseOpponent />
             <ChooseMulligan />
-            <ShowAdvices archetypes={data.allOppDecks} />
+            <ShowAdvices decks={data.allOppDecks} />
             <ChooseOutcome />
           </div>
         );
