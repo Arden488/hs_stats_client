@@ -1,14 +1,16 @@
 import gql from 'graphql-tag';
 
 export default gql`
-  mutation createOppDeck(
+  mutation updateOppDeck(
+    $id: String!,
     $name: String!,
     $charClass: String!,
     $archetypeId: String!,
     $code: String!,
     $key_features: String
   ) {
-    createOppDeck(
+    updateOppDeck(
+      id: $id,
       name: $name,
       charClass: $charClass,
       archetypeId: $archetypeId,
