@@ -11,6 +11,11 @@ import App from './App';
 import * as serviceWorker from './serviceWorker';
 import { Wrapper } from './styles/layouts';
 
+if (process.env.NODE_ENV !== 'production') {
+  const {whyDidYouUpdate} = require('why-did-you-update');
+  whyDidYouUpdate(React);
+}
+
 const defaults = {
   activeDeck: {
     __typename: 'ActiveDeck',
