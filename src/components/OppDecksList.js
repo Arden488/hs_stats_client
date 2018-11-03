@@ -2,6 +2,7 @@ import React from 'react';
 import { Query, Mutation } from "react-apollo";
 import getOppDeck from '../graphql/getOppDeck';
 import createOppDeck from '../graphql/createOppDeck';
+import updateOppDeck from '../graphql/updateOppDeck';
 import gql from "graphql-tag";
 import { 
   groupBy as _groupBy, 
@@ -32,8 +33,9 @@ const Card = styled.div`
   }
 `;
 
-const NewDeckForm = styled.form`
+const DeckForm = styled.form`
   input[type=text],
+  select,
   textarea {
     display: block;
     margin-bottom: 10px;
@@ -66,22 +68,28 @@ class OppDecksList extends React.Component {
         key_features: '',
         charClass: ''
       },
-      newFormOpen: false
+      formOpen: false
     }
 
     this.resetActiveOppDeck = this.resetActiveOppDeck.bind(this);
-    this.handleOpenNewForm = this.handleOpenNewForm.bind(this);
+    this.handleOpenForm = this.handleOpenForm.bind(this);
     this.handleInputChange = this.handleInputChange.bind(this);
   }
 
   outOppDecksByClasses(decks) {
-    const byClasses = _groupBy(decks, 'charClass');
+    const groupsSorted = _sortBy(decks, (o) => {
+      return o.charClass
+    })
+    const groups = _groupBy(groupsSorted, (v) => {
+      return v.archetypeId.name
+    });
     
-    return _map(byClasses, (dcks, charClass) => {
+    return Object.keys(groups).map((key) => {
+      const group = groups[key]
       return (
-        <div key={charClass}>
-          <GroupHeading>{`${charClass}`}</GroupHeading>
-          {this.outputOppDecks(dcks)}
+        <div key={key}>
+          <GroupHeading>{`${key}`}</GroupHeading>
+          {this.outputOppDecks(group)}
         </div>
       )
     })
@@ -145,6 +153,10 @@ class OppDecksList extends React.Component {
           <LargeButton onClick={this.resetActiveOppDeck}>Back</LargeButton>
         </p>
         {cards}
+        <div>
+          {this.addForm('update', arch)}
+          {this.state.formOpen ? '' : <Button onClick={this.handleOpenForm}>Edit deck</Button>}
+        </div>
         <p>
           <LargeButton onClick={this.resetActiveOppDeck}>Back</LargeButton>
         </p>
@@ -152,9 +164,9 @@ class OppDecksList extends React.Component {
     )
   }
 
-  handleOpenNewForm() {
+  handleOpenForm() {
     this.setState({
-      newFormOpen: true
+      formOpen: true
     })
   }
 
@@ -165,61 +177,74 @@ class OppDecksList extends React.Component {
     this.setState(newState);
   }
 
-  outputForm(archetypes) {
+  outputForm(type, deckData, archetypes) {
+    const mutationType = type === 'create' ? createOppDeck : updateOppDeck;
+    const mutationTypeName = mutationType.definitions[0].name.value;
+
     return <Mutation 
-      mutation={createOppDeck}
-      refetchQueries={['allOppDecks']}
+      mutation={mutationType}
+      refetchQueries={['allOppDecks', 'getOppDeck']}
     >
-      {(createOppDeck, { loading, error, data, client }) => {
-        if (data && data.createOppDeck._id) {
+      {(mutation, { loading, error, data, client }) => {
+        if (data && data[mutationTypeName] && data[mutationTypeName]._id) {
           this.setState({
-            newFormOpen: false
+            formOpen: false
           })
         }
+
+        const variables = {};
+
+        if (type === 'update') {
+          variables.id = this.state.activeDeck
+          archetypes = archetypes.filter(a => a.charClass === this.state.form.charClass)
+          if (_findIndex(archetypes, { _id: this.state.form.archetypeId }) === -1) {
+            archetypes.unshift({ _id: '0', name: 'Choose one' })
+          }
+        }
+
+        variables.name = this.state.form.name;
+        variables.code = this.state.form.code;
+        variables.archetypeId = this.state.form.archetypeId;
+        variables.key_features = this.state.form.key_features;
+        variables.charClass = this.state.form.charClass;
         
         return (
-          <NewDeckForm 
+          <DeckForm 
             onSubmit={e => {
               e.preventDefault();
-              createOppDeck({ variables: { 
-                name: this.state.form.name,
-                code: this.state.form.code,
-                archetypeId: this.state.form.archetypeId,
-                key_features: this.state.form.key_features,
-                charClass: this.state.form.charClass
-              } });
+              mutation({ variables });
             }}
           >
-            <h3>New deck</h3>
+            <h3>{type === 'create' ? 'New deck' : `Edit deck '${deckData.name}'`}</h3>
             <input placeholder="Name" type="text" name="name" value={this.state.form.name} onChange={this.handleInputChange} />
             <input placeholder="Code" type="text" name="code" value={this.state.form.code} onChange={this.handleInputChange} />
             <input placeholder="Class" type="text" name="charClass" value={this.state.form.charClass} onChange={this.handleInputChange} />
             <select placeholder="Archetype" name="archetypeId" value={this.state.form.archetypeId} onChange={this.handleInputChange}>
-              {archetypes.map(arch => <option key={arch._id} value={arch.id}>{arch.name}</option>)}
+              {archetypes.map(arch => <option key={arch._id} value={arch._id}>{arch.name}</option>)}
             </select>
             <textarea placeholder="Key features" name="key_features" value={this.state.form.key_features} onChange={this.handleInputChange} />
-            <Button type="submit">Save game</Button>
+            <Button type="submit">Save deck</Button>
             {loading && <p>Loading...</p>}
             {error && <p>Error :( Please try again</p>}
-          </NewDeckForm>
+          </DeckForm>
         )
       }}
     </Mutation>;
   }
-
-  addNewForm() {
-    return this.state.newFormOpen ? 
-    <Query query={allArchetypes}>
+ 
+  addForm(type, deckData) {
+    return this.state.formOpen ? 
+      <Query query={allArchetypes}>
         {({ loading, error, data }) => {
           if (loading) return <span>Loading...</span>;
           if (error) return `Error!: ${error}`;
 
           return (
-            <div>{this.outputForm(data.allArchetypes)}</div>
+            <div>{this.outputForm(type, deckData, data.allArchetypes)}</div>
           )
         }}
-      </Query> :
-      <p><LargeButton onClick={this.handleOpenNewForm}>Add new</LargeButton></p>
+      </Query> : '';
+      
   }
 
   showDeckDetails(id) {
@@ -242,15 +267,30 @@ class OppDecksList extends React.Component {
     )
   }
 
-  selectActiveOppDeck(id) {
+  selectActiveOppDeck(deck) {
     this.setState({
-      activeDeck: id
+      activeDeck: deck._id,
+      form: {
+        name: deck.name,
+        archetypeId: deck.archetypeId._id,
+        charClass: deck.charClass,
+        key_features: deck.key_features,
+        code: deck.code
+      }
     })
   }
 
   resetActiveOppDeck() {
     this.setState({
-      activeDeck: null
+      formOpen: false,
+      activeDeck: null,
+      form: {
+        name: '',
+        code: '',
+        archetypeId: '',
+        key_features: '',
+        charClass: ''
+      }
     })
   }
 
@@ -258,7 +298,7 @@ class OppDecksList extends React.Component {
     return decks.map(deck => {
       return (
         <ChooseOppDeckButton
-          onClick={() => this.selectActiveOppDeck(deck._id)} 
+          onClick={() => this.selectActiveOppDeck(deck)} 
           key={deck._id}
         >
           {deck.name}
@@ -275,10 +315,14 @@ class OppDecksList extends React.Component {
             allOppDecks {
               _id,
               name,
+              code,
               archetypeId {
+                _id,
+                charClass,
                 name
               },
-              charClass
+              charClass,
+              key_features
             }
           }
         `}
@@ -290,7 +334,10 @@ class OppDecksList extends React.Component {
           return (
             <div>
               {this.outOppDecksByClasses(data.allOppDecks)}
-              {this.addNewForm()}
+              {this.addForm('create', null)}
+              <p>
+                <LargeButton onClick={this.handleOpenForm}>Add new deck</LargeButton>
+              </p>
             </div>
           )
         }}
