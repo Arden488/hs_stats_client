@@ -91,6 +91,7 @@ class App extends Component {
             }}
           </Query>
           <Link to="/decks-list"><Button>Show Decks</Button></Link>
+          <Link to="/archs-list"><Button>Show Archetypes</Button></Link>
         </Aside>
       </ActiveDeck>
     )
