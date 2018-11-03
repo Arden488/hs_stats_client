@@ -24,7 +24,7 @@ class ChooseOutcome extends React.Component {
   render() {
     const { currentGame } = this.props;
 
-    if ( !currentGame.opponentArchetype || currentGame.outcome ) return false;
+    if ( !currentGame.opponentDeck || currentGame.outcome ) return false;
 
     return (
       <ButtonList>
