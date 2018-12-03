@@ -29,8 +29,8 @@ const MulliganChosenList = styled.div`
 `;
 
 const MulliganPlaceholder = styled.div`
-  height: 110px;
-  background: ${colors.blocksBg}
+  height: 258px;
+  background: ${colors.layoutBg}
 `;
 
 const MulliganChosen = styled.button`
@@ -45,7 +45,7 @@ const MulliganChosen = styled.button`
 
 const MulliganCardList = styled.div`
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(6, 1fr);
 `;
 
 const MulliganCardChoice = styled.button`
@@ -62,7 +62,6 @@ const MulliganCardChoice = styled.button`
   }
 
   img {
-    display: block;
     max-width: 100%;
   }
 `;

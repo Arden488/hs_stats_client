@@ -14,20 +14,11 @@ import { LargeButton } from '../styles/buttons';
 import styled from 'styled-components'
 
 const GameSummary = styled.section`
-  position: ${props => props.isStatic ? 'static' : 'fixed'};
   background: ${colors.layoutBg};
-  width: 100%;
-  left: 0;
-  bottom: 0;
-  transform: translateY(${props => props.isStatic ? '0px': (props.isOpen ? '0px' : '100%')});
-  transition: transform .5s;
   box-sizing: border-box;
 `;
 
 const GameSummaryHeader = styled.header`
-  position: ${props => props.isStatic ? 'static' : 'absolute'};
-  bottom: 100%;
-  width: 100%;
   background: ${props => props.isStatic ? 'none' : colors.blocksBg};
   padding: ${spacers.paddings.x1} ${spacers.paddings.x2};
 `;

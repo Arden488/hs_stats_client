@@ -13,6 +13,14 @@ import getCurrentGame from '../graphql/getCurrentGame';
 import getActiveDeck from '../graphql/getActiveDeck';
 import allOppDecks from '../graphql/allOppDecks';
 
+import styled from 'styled-components'
+
+const NewGameContainer = styled.section`
+  display: grid;
+  grid-template-columns: auto 200px;
+  grid-column-gap: 30px
+`;
+
 class NewGame extends React.Component {
   constructor(props) {
     super(props);
@@ -41,13 +49,17 @@ class NewGame extends React.Component {
         if (error) return <p>Error: {error}</p>;
 
         return (
-          <div>
-            <NewGameSummary />
-            <ChooseOpponent />
-            <ChooseMulligan />
-            <ShowAdvices decks={data.allOppDecks} />
-            <ChooseOutcome />
-          </div>
+          <NewGameContainer>
+            <main>
+              <ChooseOpponent />
+              <ChooseMulligan />
+              <ShowAdvices decks={data.allOppDecks} />
+              <ChooseOutcome />
+            </main>
+            <aside>
+              <NewGameSummary />
+            </aside>
+          </NewGameContainer>
         );
       }}
     </Query>;

@@ -17,16 +17,21 @@ import { getCardById } from '../helpers/cards_api';
 import styled from 'styled-components'
 import { Button, LargeButton } from '../styles/buttons';
 import allArchetypes from '../graphql/allArchetypes';
+import { fonts } from '../styles/vars';
 
 const CardList = styled.div`
   display:grid;
-  grid-template-columns: repeat(2, 1fr);
+  grid-template-columns: repeat(8, 1fr);
   grid-column-gap: 20px;
   margin-bottom: 40px;
 `;
 
 const Card = styled.div`
   text-align: center;
+
+  span {
+    font-size: ${fonts.extraSmallSize}
+  }
 
   img {
     max-width: 100%;
@@ -127,7 +132,7 @@ class OppDecksList extends React.Component {
 
       return <Card key={card.id}>
         <img src={image} alt={card.name} />
-        <span>{card.name}</span>
+        <span>{card.name} ({card.count})</span>
       </Card>
     })
   }
