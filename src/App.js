@@ -11,6 +11,19 @@ import getAllWinrates from './graphql/getAllWinrates';
 import './App.css';
 import styled from 'styled-components'
 import { LargeButton, Button } from './styles/buttons';
+import { fonts, spacers } from './styles/vars';
+
+const StatsBlock = styled.div`
+  display: inline-block;
+  text-transform: uppercase;
+  font-size: ${fonts.extraSmallSize};
+  margin-right: ${spacers.baseSpacer * 4}px;
+
+  span {
+    display: block;
+    font-size: ${fonts.extraLargeSize}
+  }
+`;
 
 const ActiveDeck = styled.section`
   display: grid;
@@ -61,10 +74,10 @@ class App extends Component {
       <div>
         <h2>{deck.name}</h2>
 
-        <p>Total games played: {games}</p>
-        <p>Total wins: {wins}</p>
-        <p>Total losses: {losses}</p>
-        <p>Total winrate: {winrate}</p>
+        <StatsBlock><span>{games}</span>games</StatsBlock>
+        <StatsBlock><span>{wins}</span>wins</StatsBlock>
+        <StatsBlock><span>{losses}</span>losses</StatsBlock>
+        <StatsBlock><span>{winrate}</span>winrate</StatsBlock>
 
         <p>
           <Link to="/new-game"><LargeButton primary>New Game</LargeButton></Link>
@@ -90,8 +103,11 @@ class App extends Component {
               return this.outputTotalWinrate(deck, data.allWinrates);
             }}
           </Query>
-          <Link to="/decks-list"><Button>Show Decks</Button></Link>
-          <Link to="/archs-list"><Button>Show Archetypes</Button></Link>
+          <p>
+            <Link to="/decks-list"><Button>Show Decks</Button></Link>
+            &nbsp;
+            <Link to="/archs-list"><Button>Show Archetypes</Button></Link>
+          </p>
         </Aside>
       </ActiveDeck>
     )
