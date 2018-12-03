@@ -26,6 +26,7 @@ const colors = {
 
 const fonts = {
   size: '16px',
+  extraLargeSize: '40px',
   largeSize: '24px',
   smallSize: '14px',
   extraSmallSize: '10px',
