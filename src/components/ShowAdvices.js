@@ -23,6 +23,24 @@ import { SmallButton } from '../styles/buttons';
 
 const CardList = styled.div``;
 
+const PlayedCard = styled.img`
+  height: 80px;
+`;
+
+const DeckSuggestion = styled.span`
+  display: inline-block;
+  background: ${colors.primary};
+  font-size: 10px;
+  padding: 3px 5px;
+  border-radius: 5px;
+  margin: 0 1px 1px;
+  box-sizing: border-box;
+  vertical-align: top;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  white-space: nowrap;
+`;
+
 const DeckVariant = styled.div`
   display: inline-block;
   position: relative;
@@ -54,19 +72,17 @@ const DeckVariant = styled.div`
 const CardChoice = styled.button`
   position: relative;
   display: inline-block;
-  background-repeat: no-repeat;
-  background-color: transparent;
-  background-image: url(${props => props.backgroundImage});
-  background-size: 100%;
-  opacity: ${props => props.isPlayable ? '1' : '.6'};
+  background: none;
   border: 0;  
   padding: 0;
   margin-bottom: ${spacers.margins.x1};
   margin-right: ${spacers.margins.x2};
   color: ${colors.text};
-  text-align: left;
-  width: 150px;
-  height: 268px;
+  text-align: center;
+
+  img {
+    max-width: 100%;
+  }
 
   :focus {
     outline: 0; 
@@ -88,13 +104,16 @@ const CardChoiceCost = styled.span`
 
 const CardChoiceCount = styled.span`
   display: block;
-  color: ${colors.primary};
-  font-size: 10px;
-  width: 10px;
-  height: 10px;
+  background: ${colors.third};
+  font-size: ${fonts.smallSize};
+  width: 25px;
+  height: 25px;
+  line-height: 25px;
+  font-weight: bold;
+  border-radius: 50%;
   position: absolute;
-  top: 0;
-  left: 30px;
+  top: -5px;
+  right: 10px;
   text-align: center;
 `;
 
@@ -129,16 +148,21 @@ const CardChoiceRace = styled.span`
 const CardChoiceName = styled.span`
   font-size: 8px;
   position: absolute;
-  left: 40px;
+  left: 20px;
   top: 2px;
-  max-width: 40%;
+  max-width: 53%;
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
   display: block;
 `;
 
-const CardGroup = styled.div``;
+const CardGroup = styled.section`
+  article {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+  }
+`;
 
 class ShowAdvices extends React.Component {
   constructor(props) {
@@ -154,13 +178,13 @@ class ShowAdvices extends React.Component {
     this.increaseMana = this.increaseMana.bind(this);
   }
 
-  outputAllCardsByDeck(cards) {
+  outputAllCardsByDeck(cards, deckGroups) {
     cards = _sortBy(cards, ['cost']);
     const cardsByGroup = _groupBy(cards, 'type');
 
     return (
       <CardList>
-        {this.outputCardGroupsList(cardsByGroup)}
+        {this.outputCardGroupsList(cardsByGroup, deckGroups)}
       </CardList>
     )
   }
@@ -221,38 +245,45 @@ class ShowAdvices extends React.Component {
     )
   }
 
-  outputCardList(type, cards) {
+  outputCardList(type, cards, deckGroups) {
     return cards.map(card => {
       const image = getCardImageById(card.id);
-      let isPlayable = false;
+      let deckSuggestion = '';
 
-      if (card.cost <= this.state.opponentMana) {
-        isPlayable = true;
+      // if ( (card.decks.length/this.state.decks.length)*100 <= 20 && this.state.decks.length > 1 ) {
+      // if ( card.decks.length < deckGroups.length )
+      if ( Object.keys(deckGroups).length > 1 ) {
+        const displaySuggestions = _groupBy(card.decks, (v) => {
+          return v.archetype
+        });
+        deckSuggestion = Object.keys(displaySuggestions).map(sugg => <DeckSuggestion>{sugg}</DeckSuggestion>)
+      } else if (card.decks.length/deckGroups.length*100 <= 50) {
+        deckSuggestion = card.decks.map(deck => <DeckSuggestion>{deck.name}</DeckSuggestion>)
       }
+      // }
 
       return <CardChoice 
           key={card.id} 
           onClick={() => this.handleChooseCard(card)}
-          backgroundImage={image}
-          isPlayable={isPlayable}
         >
           <CardChoiceName>{card.name}</CardChoiceName>
-          <CardChoiceCost>{card.cost}</CardChoiceCost>
           {card.count > 1 ? <CardChoiceCount>{card.count}</CardChoiceCount> : ''}
-          <CardChoiceRace>{card.race}</CardChoiceRace>
-          {/* {this.outputCardMechanics(card)} */}
+          <img src={image} alt={card.name} />
+          {deckSuggestion}
         </CardChoice>
     })
   }
 
-  outputCardGroupsList(cardsByGroup) {
+  outputCardGroupsList(cardsByGroup, deckGroups) {
     return _map(cardsByGroup, (cards, type) => {
-      const cardsOutput = this.outputCardList(type, cards);
+      const cardsOutput = this.outputCardList(type, cards, deckGroups);
 
       return (
         <CardGroup key={type}>
           <h3>{type}</h3>
-          {cardsOutput}
+          <article>
+            {cardsOutput}
+          </article>
         </CardGroup>
       )
     })
@@ -277,16 +308,17 @@ class ShowAdvices extends React.Component {
 
   outputOpponentGameInfo() {
     const playedCards = this.state.playedCards.map((card, i) => {
-      return <span key={i}>{card.name}</span>
+      const image = getCardImageById(card.id);
+      return <PlayedCard src={image} key={i} alt={card.name} title={card.name} />
     })
     
     return (
       <div>
-        <p>
+        {/* <p>
           Mana: {this.state.opponentMana}
           <SmallButton onClick={this.increaseMana}>+</SmallButton>
-        </p>
-        <p>Cards played: {playedCards}</p>
+        </p> */}
+        <p>Cards played:<br />{playedCards}</p>
       </div>
     )
   }
@@ -294,11 +326,29 @@ class ShowAdvices extends React.Component {
   updateActiveCards(decks, playedCards) {
     let cards = [];
 
-    decks.forEach(arch => {
-      cards = arch.cards.concat(cards)
+    decks.forEach(deck => {
+      // console.log(deck)
+      deck.cards.forEach(card => {
+        // if ( !card.decks ) { card.decks = []; }
+        const deckData = { name: deck.name, archetype: deck.archetypeId.name };
+
+        // console.log(deckData)
+        
+        const index = _findIndex(cards, { 'id': card.id });
+        if ( index === -1 ) {
+          card.decks = [deckData];
+          cards.push(card)
+        } else if ( cards[index].count < 2 ) {
+          cards[index].decks.push(deckData)
+          cards[index].count++;
+        } else {
+          cards[index].decks.push(deckData)
+        }
+      })
+      // cards = arch.cards.concat(cards)
     })
 
-    cards = _uniqBy(cards, 'id');
+    // cards = _uniqBy(cards, 'id');
 
     playedCards.forEach(card => {
       const i = _findIndex(cards, { 'id': card.id })
@@ -327,11 +377,7 @@ class ShowAdvices extends React.Component {
     }
   }
 
-  outputExpectedDecks(decks) {
-    const groups = _groupBy(decks, (v) => {
-      return v.archetypeId.name
-    });
-
+  outputExpectedDecks(groups) {
     if (this.props.currentGame.opponentDeck) {
       return (
         <div>
@@ -378,8 +424,6 @@ class ShowAdvices extends React.Component {
     const deck = _find(this.state.decks, { '_id': id })
     const cards = this.updateActiveCards([deck], this.state.playedCards)
 
-    console.log(cards)
-
     this.setState({
       decks: [deck],
       activeCards: cards
@@ -421,9 +465,13 @@ class ShowAdvices extends React.Component {
 
     if ( !currentGame.opponentClass || currentGame.mulligan.length < 3 || currentGame.outcome ) return false;
 
-    const cardsList = this.outputAllCardsByDeck(this.state.activeCards);
+    const groups = _groupBy(this.state.decks, (v) => {
+      return v.archetypeId.name
+    });
+
+    const cardsList = this.outputAllCardsByDeck(this.state.activeCards, groups);
     const opponentInfo = this.outputOpponentGameInfo();
-    const expectedDecks = this.outputExpectedDecks(this.state.decks);
+    const expectedDecks = this.outputExpectedDecks(groups);
 
     return (
       <div>
