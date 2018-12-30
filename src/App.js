@@ -95,7 +95,7 @@ class App extends Component {
           <img src={deck.heroImage} alt={deck.name} />
         </MainContent>
         <Aside>
-          <Query query={getAllWinrates}>
+          <Query query={getAllWinrates} variables={{ deckId: deck.id }}>
             {({ loading, error, data }) => {
               if (loading) return <p>Loading...</p>;
               if (error) return <p>Error: {error}</p>;
