@@ -19,6 +19,7 @@ if (process.env.NODE_ENV !== 'production') {
 const defaults = {
   activeDeck: {
     __typename: 'ActiveDeck',
+    id: null,
     name: null,
     heroImage: null
   },
