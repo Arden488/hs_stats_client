@@ -5,6 +5,7 @@ export default gql` {
     _id,
     name,
     charClass,
+    key_cards,
     key_features
   }
 }`;

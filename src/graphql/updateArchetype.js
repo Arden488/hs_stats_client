@@ -5,12 +5,14 @@ export default gql`
     $id: String!,
     $name: String!,
     $charClass: String!,
+    $key_cards: [Number],
     $key_features: String
   ) {
     updateArchetype(
       id: $id,
       name: $name,
       charClass: $charClass,
+      key_cards: $key_cards,
       key_features: $key_features
     ) {
       _id
