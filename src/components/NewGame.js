@@ -11,9 +11,10 @@ import ShowAdvices from './ShowAdvices';
 
 import getCurrentGame from '../graphql/getCurrentGame';
 import getActiveDeck from '../graphql/getActiveDeck';
-import allOppDecks from '../graphql/allOppDecks';
+// import allOppDecks from '../graphql/allOppDecks';
 
 import styled from 'styled-components'
+import getOppDecksByClass from '../graphql/getOppDecksByClass';
 
 const NewGameContainer = styled.section`
   display: grid;
@@ -38,31 +39,40 @@ class NewGame extends React.Component {
     })
   }
 
+  showAdvicesBlock() {
+    const oppClass = this.props.currentGame.opponentClass;
+    const oppClassCap = oppClass.charAt(0).toUpperCase() + oppClass.slice(1);
+    
+    return <Query query={getOppDecksByClass} variables={{ charClass: oppClassCap }}>
+      {({ loading, error, data, client }) => {
+        if (loading) return <p>Loading opponents' decks...</p>;
+        if (error) return <p>Error: {error}</p>;
+
+        let decks = data.getOppDecksByClass;
+
+        return <ShowAdvices decks={decks} />;
+      }}
+    </Query>
+  }
+
   render() {
     if (!this.props.activeDeck.name) {
       return <div><Redirect to={`/`} /></div>;
     }
 
-    return <Query query={allOppDecks}>
-      {({ loading, error, data, client }) => {
-        if (loading) return <p>Loading...</p>;
-        if (error) return <p>Error: {error}</p>;
-
-        return (
-          <NewGameContainer>
-            <main>
-              <ChooseOpponent />
-              <ChooseMulligan />
-              <ShowAdvices decks={data.allOppDecks} />
-              <ChooseOutcome />
-            </main>
-            <aside>
-              <NewGameSummary />
-            </aside>
-          </NewGameContainer>
-        );
-      }}
-    </Query>;
+    return (
+      <NewGameContainer>
+        <main>
+          <ChooseOpponent />
+          <ChooseMulligan />
+          {this.props.currentGame.opponentClass && this.showAdvicesBlock()}
+          <ChooseOutcome />
+        </main>
+        <aside>
+          <NewGameSummary />
+        </aside>
+      </NewGameContainer>
+    );
   }
 }
 
