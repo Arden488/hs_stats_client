@@ -3,9 +3,9 @@ import { Query, compose, graphql } from 'react-apollo';
 import { Link } from 'react-router-dom'
 
 import Decks from './components/Decks';
-import ArchetypesList from './components/ArchetypesList';
 
 import getActiveDeck from './graphql/getActiveDeck';
+import getCurrentSession from './graphql/getCurrentSession';
 import getAllWinrates from './graphql/getAllWinrates';
 
 import './App.css';
@@ -27,7 +27,7 @@ const StatsBlock = styled.div`
 
 const ActiveDeck = styled.section`
   display: grid;
-  grid-template-columns: 40% 70%;
+  grid-template-columns: 30% 400px;
   
   @media (max-width: 667px) {
     grid-template-columns: auto
@@ -68,16 +68,31 @@ class App extends Component {
       losses += wr.losses;
     });
 
-    const winrate = `${((wins/games) * 100).toFixed(2)}%`;
+    const session = this.props.currentSession;
+
+    const sessGames = session.wins + session.losses;
+    const winrate = `${(((wins+session.wins)/(games+sessGames)) * 100).toFixed(2)}%`;
+    const sessWinrate = sessGames > 0 ? `${((session.wins/(sessGames)) * 100).toFixed(2)}%` : 'N/A';
 
     return (
       <div>
         <h2>{deck.name}</h2>
 
-        <StatsBlock><span>{games}</span>games</StatsBlock>
-        <StatsBlock><span>{wins}</span>wins</StatsBlock>
-        <StatsBlock><span>{losses}</span>losses</StatsBlock>
-        <StatsBlock><span>{winrate}</span>winrate</StatsBlock>
+        <h3>Total:</h3>
+        <div>
+          <StatsBlock><span>{games + sessGames}</span>games</StatsBlock>
+          <StatsBlock><span>{wins + session.wins}</span>wins</StatsBlock>
+          <StatsBlock><span>{losses + session.losses}</span>losses</StatsBlock>
+          <StatsBlock><span>{winrate}</span>winrate</StatsBlock>
+        </div>
+        <hr />
+        <h3>Current session:</h3>
+        <div>
+          <StatsBlock><span>{sessGames}</span>games</StatsBlock>
+          <StatsBlock><span>{session.wins}</span>wins</StatsBlock>
+          <StatsBlock><span>{session.losses}</span>losses</StatsBlock>
+          <StatsBlock><span>{sessWinrate}</span>winrate</StatsBlock>
+        </div>
 
         <p>
           <Link to="/new-game"><LargeButton primary>New Game</LargeButton></Link>
@@ -87,8 +102,6 @@ class App extends Component {
   }
 
   showActiveDeck(deck) {
-    if (!deck.name) return <Decks />;
-
     return (
       <ActiveDeck>
         <MainContent>
@@ -116,6 +129,8 @@ class App extends Component {
   render() {
     const { activeDeck } = this.props;
 
+    if (!activeDeck.name) return <Decks />;
+
     return (
       <div>
         {this.showActiveDeck(activeDeck)}
@@ -129,5 +144,10 @@ export default compose(
     props: ({ data: { activeDeck } }) => ({
         activeDeck
     })
-  })
+  }),
+  graphql(getCurrentSession, {
+    props: ({ data: { currentSession } }) => ({
+      currentSession
+    })
+  }),
 )(App);
