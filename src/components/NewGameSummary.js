@@ -4,11 +4,14 @@ import { Mutation, Query, compose, graphql } from 'react-apollo';
 import { uniqBy as _uniqBy } from 'lodash';
 
 import getCurrentGame from '../graphql/getCurrentGame';
+import updateCurrentSession from '../graphql/updateCurrentSession';
+import getCurrentSession from '../graphql/getCurrentSession';
 import getOppDeck from '../graphql/getOppDeck';
 import createGameAndUpdateWinrate from '../graphql/createGameAndUpdateWinrate';
-import { getData } from '../helpers/storage_utils';
 import resetGame from '../graphql/resetGame';
 import getWinratesByClass from '../graphql/getWinratesByClass';
+
+import { getData } from '../helpers/storage_utils';
 import { colors, spacers } from '../styles/vars';
 import { LargeButton } from '../styles/buttons';
 import styled from 'styled-components'
@@ -80,6 +83,20 @@ class NewGameSummary extends React.Component {
     )
   }
 
+  updateSession(outcome) {
+    const session = this.props.currentSession;
+    const up = { wins: session.wins, losses: session.losses }
+    if (outcome === 'victory') {
+      up.wins++
+    } else {
+      up.losses++
+    }
+
+    this.props.updateCurrentSession({
+      variables: { wins: up.wins, losses: up.losses }
+    })
+  }
+
   outputSaveButton(game) {
     if ( !game.opponentClass || !game.opponentDeck || !game.outcome || game.mulligan.length < 3 ) {
       return null;
@@ -94,6 +111,7 @@ class NewGameSummary extends React.Component {
       >
         {(createGameAndUpdateWinrate, { loading, error, data, client }) => {
           if (data && data.createGame._id) {
+            this.updateSession(game.outcome)
             this.props.resetGame()
             return <div><Redirect to={`/`} /></div>;
           }
@@ -205,6 +223,12 @@ class NewGameSummary extends React.Component {
 export default compose(
   withRouter,
   graphql(resetGame, { name: 'resetGame' }),
+  graphql(updateCurrentSession, { name: 'updateCurrentSession' }),
+  graphql(getCurrentSession, {
+    props: ({ data: { currentSession } }) => ({
+      currentSession
+    })
+  }),
   graphql(getCurrentGame, {
     props: ({ data: { currentGame } }) => ({
       currentGame
