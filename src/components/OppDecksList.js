@@ -6,7 +6,6 @@ import updateOppDeck from '../graphql/updateOppDeck';
 import gql from "graphql-tag";
 import { 
   groupBy as _groupBy, 
-  map as _map,
   findIndex as _findIndex,
   sortBy as _sortBy
 } from 'lodash';

@@ -1,11 +1,7 @@
-import HearthstoneJSON from "hearthstonejson-client";
 import { find } from 'lodash';
 
-const hsjson = new HearthstoneJSON();  
-hsjson.get('latest');
-
 function getCardById(id) {
-  const data = localStorage.getItem('hsjson-27845_enUS');
+  const data = localStorage.getItem('hsjson-28855_enUS');
   const cards = JSON.parse(data).cards;
 
   const card = find(cards, { 'dbfId': id });

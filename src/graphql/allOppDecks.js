@@ -17,6 +17,7 @@ export default gql` {
       dbfId, 
       id, 
       name, 
+      rarity,
       type
     }
   }

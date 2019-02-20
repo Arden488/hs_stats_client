@@ -4,10 +4,8 @@ import gql from "graphql-tag";
 import { 
   groupBy as _groupBy, 
   map as _map,
-  sortBy as _sortBy
 } from 'lodash';
 
-import allArchetypes from '../graphql/allArchetypes';
 import getArchetype from '../graphql/getArchetype';
 import createArchetype from '../graphql/createArchetype';
 import updateArchetype from '../graphql/updateArchetype';
@@ -171,7 +169,6 @@ class ArchetypesList extends React.Component {
   }
 
   selectActiveArchetype(deck) {
-    console.log(deck)
     this.setState({
       activeArchetype: deck._id,
       form: {
