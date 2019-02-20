@@ -19,33 +19,48 @@ import { colors, spacers } from '../styles/vars';
 const ActionBlock = styled.div`
   text-align: center;
   padding: ${spacers.paddings.x2}
-  margin-bottom: ${spacers.baseSpacer * 5}px
+`;
+
+const MulliganWrapper = styled.div`
+  display: grid;
+  grid-template-columns: auto 200px;
+  align-items: center;
 `;
 
 const MulliganChosenList = styled.div`
   display: grid;
-  grid-template-columns: repeat(${props => `${props.count}, 1fr` });
+  grid-template-columns: repeat(${props => `${props.count}, minmax(100px, 256px)` });
   grid-column-gap: ${spacers.baseSpacer * 1}px
 `;
 
 const MulliganPlaceholder = styled.div`
-  height: 258px;
+  width: 256px;
+  height: 382px;
+  max-width: 100%;
+  max-height: 18vw;
   background: ${colors.layoutBg}
 `;
 
 const MulliganChosen = styled.button`
   background: none;
-  border: 0;  
+  border: 0;
+  display: block;
+  width: 256px;
+  height: 382px;
+  max-width: 100%;
+  max-height: 18vw;
 
   img {
     display: block;
+    margin: auto;
     max-width: 100%;
+    max-height: 100%;
   }
 `;
 
 const MulliganCardList = styled.div`
   display: grid;
-  grid-template-columns: repeat(6, 1fr);
+  grid-template-columns: repeat(9, 1fr);
 `;
 
 const MulliganCardChoice = styled.button`
@@ -152,7 +167,7 @@ class ChooseMulligan extends React.Component {
           
                 return (
                   <MulliganCardChoice key={card.id} onClick={() => this.handleChooseMulligan(card)}>
-                    <img width="100" src={image} alt={card.name} />
+                    <img width="150" src={image} alt={card.name} />
                     {winrate}
                   </MulliganCardChoice>
                 );
@@ -202,9 +217,14 @@ class ChooseMulligan extends React.Component {
     });
 
     return (
-      <MulliganChosenList count={this.state.mulliganCount}>
-        {placeholders}
-      </MulliganChosenList>
+      <MulliganWrapper>
+        <MulliganChosenList count={this.state.mulliganCount}>
+          {placeholders}
+        </MulliganChosenList>
+        <ActionBlock>
+          <LargeButton primary onClick={this.handleMulliganApprove}>Done</LargeButton>
+        </ActionBlock>
+      </MulliganWrapper>
     )
   }
 
@@ -229,9 +249,6 @@ class ChooseMulligan extends React.Component {
       <div>
         {mulliganChosen}
         {cards}
-        <ActionBlock>
-          <LargeButton primary onClick={this.handleMulliganApprove}>Done</LargeButton>
-        </ActionBlock>
       </div>
     );
   }
