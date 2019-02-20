@@ -184,8 +184,6 @@ class ShowAdvices extends React.Component {
         return o.cost <= 1
       }
     }
-
-    // this.increaseMana = this.increaseMana.bind(this);
   }
 
   filterCards(filter) {
@@ -241,7 +239,12 @@ class ShowAdvices extends React.Component {
     let cards = this.state.activeCards;
     newArr.push(card);
 
-    const newDecks = this.updateActualDecks(newArr)
+    let newDecks = this.state.decks;
+
+    if (this.props.currentGame.opponentDeck) {
+      newDecks = this.updateActualDecks(newArr)
+    }
+    
     cards = this.updateActiveCards(newDecks, newArr)
     const filteredCards = _filter(cards, this.state.currFilter);
 
@@ -513,6 +516,7 @@ class ShowAdvices extends React.Component {
 
   outputExpectedDecks() {
     if (this.props.currentGame.opponentDeck) {
+      // console.log(this.state.decks)
       return (
         <div>
           <h4>Selected deck:</h4>
@@ -558,15 +562,22 @@ class ShowAdvices extends React.Component {
   handleChooseOppDeck(id) {
     const deck = _find(this.state.decks, { '_id': id })
     const cards = this.updateActiveCards([deck], this.state.playedCards)
+    const filteredCards = _filter(cards, this.state.currFilter);
 
     this.setState({
       decks: [deck],
-      activeCards: cards
+      deckGroups: [],
+      openedDeckGroups: [],
+      activeCards: cards,
+      filteredCards
+    }, () => {
+      console.log(this.state.decks)
+      console.log(this.state.activeCards)
+      
+      this.props.updateGameOpponentDeck({
+        variables: { opponentDeck: id }
+      })
     });
-    
-    this.props.updateGameOpponentDeck({
-      variables: { opponentDeck: id }
-    })
   }
 
   updateActualDecks(playedCards/*, removedCards*/) {
