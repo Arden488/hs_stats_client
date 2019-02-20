@@ -13,7 +13,11 @@ import { Wrapper } from './styles/layouts';
 
 if (process.env.NODE_ENV !== 'production') {
   const {whyDidYouUpdate} = require('why-did-you-update');
-  whyDidYouUpdate(React);
+  whyDidYouUpdate(React, {
+    exclude: [
+      /^Route/,
+    ]
+  });
 }
 
 const defaults = {
@@ -29,6 +33,11 @@ const defaults = {
     opponentDeck: null,
     mulligan: [],
     outcome: null
+  },
+  currentSession: {
+    __typename: 'CurrentSession',
+    wins: 0,
+    losses: 0
   }
 };
 
@@ -40,6 +49,10 @@ const resolvers = {
     },
     updateActiveDeck: (_, { id, name, heroImage }, { cache }) => {
       cache.writeData({ data: { activeDeck: { id, name, heroImage, __typename: 'ActiveDeck' } } });
+      return null;
+    },
+    updateCurrentSession: (_, { wins, losses }, { cache }) => {
+      cache.writeData({ data: { currentSession: { wins, losses, __typename: 'ActiveDeck' } } });
       return null;
     },
     updateGameOpponentClass: (_, { opponentClass }, { cache }) => {
