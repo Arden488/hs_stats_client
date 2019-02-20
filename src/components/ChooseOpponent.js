@@ -1,11 +1,13 @@
 import React from 'react';
 
 import { getListOfClasses } from '../helpers/hero_classes';
-import { compose, graphql } from 'react-apollo';
+import { compose, graphql, Query } from 'react-apollo';
 import updateGameOpponentClass from '../graphql/updateGameOpponentClass';
 import getCurrentGame from '../graphql/getCurrentGame';
+import getWinratesByClass from '../graphql/getWinratesByClass';
 import styled from 'styled-components'
 import { fonts, colors } from '../styles/vars';
+import { getData } from '../helpers/storage_utils';
 
 const HeroClassesList = styled.div`
   display: grid;
@@ -19,10 +21,10 @@ const HeroChooseButton = styled.button`
   position: relative;
 
   span {
-    font-size: ${fonts.size};
+    font-size: ${fonts.smallSize};
     display: block;
     position: absolute;
-    bottom: 56px;
+    bottom: 0;
     right: 0px;
     width: 100%;
     text-align: center;
@@ -38,15 +40,49 @@ class ChooseOpponent extends React.Component {
   outputListOfClasses() {
     const heroClassesArray = getListOfClasses();
     const heroClasses = heroClassesArray.map(hero => {
+      const classWinrate = this.outputClassWinrate(hero.name)
       return (
         <HeroChooseButton key={hero.id} onClick={() => this.handleChooseClass(hero.name)}>
           <img src={hero.heroImage} alt={hero.name} />
-          <span>00.00%</span>
+          {classWinrate}
         </HeroChooseButton>
       );
     });
 
     return heroClasses
+  }
+
+  outputClassWinrate(opponentClass) {
+    return <Query 
+      query={getWinratesByClass} 
+      variables={{ deckId: getData('deck').id, opponentClass }}
+    >
+      {({ loading, error, data }) => {
+        if (loading) return <span>Loading...</span>;
+        if (error) return <span>Error: {error}</span>;
+
+        return this.outputWinrate(data.getWinratesByClass);
+      }}
+    </Query>
+  }
+
+  outputWinrate(winrates) {
+    let games = 0;
+    let wins = 0;
+    let winrate = `Not enough data`;
+
+    winrates.forEach(wr => {
+      games += wr.games;
+      wins += wr.wins;
+    });
+
+    if (games >= 10) {
+      winrate = `${((wins/games) * 100).toFixed(2)}%`;
+    }
+
+    return (
+      <span>{winrate} ({games})</span>
+    )
   }
 
   handleChooseClass(name) {
