@@ -7,10 +7,12 @@ import { BrowserRouter as Router, Route } from 'react-router-dom'
 import NewGame from './components/NewGame';
 import ArchetypesList from './components/ArchetypesList';
 import OppDecksList from './components/OppDecksList';
+import Stats from './components/Stats';
 import App from './App';
 import * as serviceWorker from './serviceWorker';
 import { Wrapper } from './styles/layouts';
 
+/*
 if (process.env.NODE_ENV !== 'production') {
   const {whyDidYouUpdate} = require('why-did-you-update');
   whyDidYouUpdate(React, {
@@ -19,6 +21,7 @@ if (process.env.NODE_ENV !== 'production') {
     ]
   });
 }
+*/
 
 const defaults = {
   activeDeck: {
@@ -87,8 +90,8 @@ const client = new ApolloClient({
     resolvers,
     typeDefs
   },
-  uri: 'https://hs-stats-server.herokuapp.com/graphql'
-  // uri: 'http://localhost:3333/graphql'
+  // uri: 'https://hs-stats-server.herokuapp.com/graphql'
+  uri: 'http://localhost:3333/graphql'
 });
 
 const render = Component => {
@@ -98,6 +101,7 @@ const render = Component => {
         <Wrapper>
           <Route exact path="/" component={App} />
           <Route path="/new-game" component={NewGame} />
+          <Route path="/stats" component={Stats} />
           <Route path="/archs-list" component={ArchetypesList} />
           <Route path="/decks-list" component={OppDecksList} />
         </Wrapper>

@@ -11,7 +11,8 @@ import getAllWinrates from './graphql/getAllWinrates';
 import './App.css';
 import styled from 'styled-components'
 import { LargeButton, Button } from './styles/buttons';
-import { fonts, spacers } from './styles/vars';
+import { fonts, spacers, colors } from './styles/vars';
+import { getWinrateColor } from './helpers/misc_utils';
 
 const StatsBlock = styled.div`
   display: inline-block;
@@ -21,17 +22,24 @@ const StatsBlock = styled.div`
 
   span {
     display: block;
-    font-size: ${fonts.extraLargeSize}
+    font-size: ${fonts.extraLargeSize};
+    color: ${props => props.color || colors.text};
   }
 `;
 
 const ActiveDeck = styled.section`
   display: grid;
-  grid-template-columns: 30% 400px;
+  grid-template-columns: 30% auto;
   
   @media (max-width: 667px) {
     grid-template-columns: auto
   }
+`;
+
+const TotalStatsBox = styled.div`
+  disply: inline-block;
+  padding-bottom: 20px;
+  border-bottom: 1px solid ${colors.elementsBg};
 `;
 
 const MainContent = styled.article`
@@ -79,19 +87,19 @@ class App extends Component {
         <h2>{deck.name}</h2>
 
         <h3>Total:</h3>
-        <div>
+        <TotalStatsBox>
           <StatsBlock><span>{games + sessGames}</span>games</StatsBlock>
           <StatsBlock><span>{wins + session.wins}</span>wins</StatsBlock>
           <StatsBlock><span>{losses + session.losses}</span>losses</StatsBlock>
-          <StatsBlock><span>{winrate}</span>winrate</StatsBlock>
-        </div>
-        <hr />
+          <StatsBlock color={getWinrateColor(winrate)}><span>{winrate}</span>winrate</StatsBlock>
+        </TotalStatsBox>
+
         <h3>Current session:</h3>
         <div>
           <StatsBlock><span>{sessGames}</span>games</StatsBlock>
           <StatsBlock><span>{session.wins}</span>wins</StatsBlock>
           <StatsBlock><span>{session.losses}</span>losses</StatsBlock>
-          <StatsBlock><span>{sessWinrate}</span>winrate</StatsBlock>
+          <StatsBlock color={getWinrateColor(winrate)}><span>{sessWinrate}</span>winrate</StatsBlock>
         </div>
 
         <p>
@@ -120,6 +128,8 @@ class App extends Component {
             <Link to="/decks-list"><Button>Show Decks</Button></Link>
             &nbsp;
             <Link to="/archs-list"><Button>Show Archetypes</Button></Link>
+            &nbsp;
+            <Link to="/stats"><Button>Show Stats</Button></Link>
           </p>
         </Aside>
       </ActiveDeck>

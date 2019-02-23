@@ -11,6 +11,7 @@ export default gql` {
     charClass,
     code,
     key_features,
+    totalGames,
     cards {
       cost,
       count, 

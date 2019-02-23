@@ -8,16 +8,22 @@ import { setData } from '../helpers/storage_utils';
 import updateActiveDeck from '../graphql/updateActiveDeck';
 import getDecks from '../graphql/getDecks';
 import getAllWinrates from '../graphql/getAllWinrates';
-import allOppDecks from '../graphql/allOppDecks';
 
 import { colors } from '../styles/vars';
 import { Button } from '../styles/buttons';
 
 import styled from 'styled-components'
+import { getWinrateColor } from '../helpers/misc_utils';
 
 const DeckList = styled.div`
   display: grid;
   grid-template-columns: repeat(10, 1fr);
+`;
+
+const DeckWinrate = styled.p`
+  span {
+    color: ${props => props.color || colors.text};
+  }
 `;
 
 const Deck = styled.button`
@@ -85,7 +91,7 @@ class Decks extends React.Component {
       onClick={() => this.handleDeckClick({ id: deck._id, name: deck.name, code: deck.code })}>
       <img width='150' src={deck.heroImage} alt={deck.name} />
       <h2>{`${deck.name}`}</h2>
-      <h3>{winrate} in {games} games</h3>
+      <DeckWinrate color={getWinrateColor(winrate)}><span>{winrate}</span> in {games} games</DeckWinrate>
     </Deck>
   }
 
@@ -93,7 +99,14 @@ class Decks extends React.Component {
     return decks.map(deck => (
       <Query key={deck._id} query={getAllWinrates} variables={{ deckId: deck._id }}>
         {({ loading, error, data }) => {
-          if (loading) return <p>Loading...</p>;
+          if (loading) return (
+            <Deck
+              key={deck._id}>
+              <img width='150' src='images/card_placeholder.png' alt=''/>
+              <h2>Loading...</h2>
+              <DeckWinrate>Loading...</DeckWinrate>
+            </Deck>
+          );
           if (error) return <p>Error: {error}</p>;
 
           return this.outputDeck(deck, data.allWinrates);

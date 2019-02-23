@@ -1,6 +1,8 @@
 const baseColors = {
   blue: '#06bfff',
   green: '#0fcc4e',
+  red: '#ff0000',
+  orange: '#ffb500',
   purple: '#706fc7',
   white: '#ffffff',
   black: '#090909',
@@ -14,6 +16,9 @@ const colors = {
   primary: baseColors.blue,
   secondary: baseColors.green,
   third: baseColors.purple,
+  success: baseColors.green,
+  failure: baseColors.red,
+  warning: baseColors.orange,
   text: baseColors.white,
   textFade: baseColors.grayLight,
   contrast: baseColors.black,

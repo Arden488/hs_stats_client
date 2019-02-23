@@ -30,4 +30,4 @@ function getHeroByName(name) {
   return heroClass;
 }
 
-export { getListOfClasses, getHeroByName }
+export { getListOfClasses, getHeroByName, getHeroImageById }

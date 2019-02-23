@@ -18,7 +18,7 @@ import getOppDecksByClass from '../graphql/getOppDecksByClass';
 
 const NewGameContainer = styled.section`
   display: grid;
-  grid-template-columns: auto 200px;
+  grid-template-columns: ${props => props.outcome ? '0 auto' : 'auto 200px'};
   grid-column-gap: 30px
 `;
 
@@ -60,13 +60,15 @@ class NewGame extends React.Component {
       return <div><Redirect to={`/`} /></div>;
     }
 
+    const outcome = this.props.currentGame.outcome !== null;
+
     return (
-      <NewGameContainer>
+      <NewGameContainer outcome={outcome}>
         <main>
           <ChooseOpponent />
           <ChooseMulligan />
-          {this.props.currentGame.opponentClass && this.showAdvicesBlock()}
           <ChooseOutcome />
+          {this.props.currentGame.opponentClass && this.showAdvicesBlock()}
         </main>
         <aside>
           <NewGameSummary />

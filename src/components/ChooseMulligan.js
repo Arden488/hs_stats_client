@@ -15,6 +15,7 @@ import getWinratesByClass from '../graphql/getWinratesByClass';
 import styled from 'styled-components'
 import { LargeButton } from '../styles/buttons';
 import { colors, spacers } from '../styles/vars';
+import { getWinrateColor } from '../helpers/misc_utils';
 
 const ActionBlock = styled.div`
   text-align: center;
@@ -63,20 +64,31 @@ const MulliganCardList = styled.div`
   grid-template-columns: repeat(9, 1fr);
 `;
 
+const CardWinrate = styled.p`
+  margin: 0;
+  text-align: center;
+
+  span {
+    color: ${props => props.color || colors.text};
+  }
+`;
+
 const MulliganCardChoice = styled.button`
   background: none;
   border: 0;  
   color: ${colors.text};
-  text-align: center;
 
-  span {
-    span {
-      display: block;
-      color: ${colors.textFade}
-    }
+  span + span {
+    display: block;
+    color: ${colors.textFade}
   }
 
   img {
+    display: inline-block;
+    background-image: url(images/card_placeholder.png);
+    background-size: contain;
+    width: 150px;
+    height: 224px;
     max-width: 100%;
   }
 `;
@@ -117,10 +129,10 @@ class ChooseMulligan extends React.Component {
       const games = winrateStats.wins + winrateStats.losses;
       const winrate = `${((winrateStats.wins/games) * 100).toFixed(2)}%`;
       return (
-        <span>
-          {winrate} 
+        <CardWinrate color={getWinrateColor(winrate)}>
+          <span>{winrate}</span>
           <span>(W: {winrateStats.wins}/ L: {winrateStats.losses})</span>
-        </span>
+        </CardWinrate>
       )
     }
 
@@ -222,7 +234,7 @@ class ChooseMulligan extends React.Component {
           {placeholders}
         </MulliganChosenList>
         <ActionBlock>
-          <LargeButton primary onClick={this.handleMulliganApprove}>Done</LargeButton>
+          {this.state.mulliganCount >= 3 && <LargeButton primary onClick={this.handleMulliganApprove}>Done</LargeButton>}
         </ActionBlock>
       </MulliganWrapper>
     )

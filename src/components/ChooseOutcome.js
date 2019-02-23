@@ -6,7 +6,7 @@ import getCurrentGame from '../graphql/getCurrentGame';
 
 import styled from 'styled-components'
 import { Button } from '../styles/buttons';
-import { spacers } from '../styles/vars';
+import { spacers, colors } from '../styles/vars';
 
 const ButtonList = styled.div`
   button {
@@ -29,8 +29,8 @@ class ChooseOutcome extends React.Component {
     return (
       <ButtonList>
         <h3>Choose outcome:</h3>
-        <Button onClick={() => this.handleChooseOutcome('victory')}>Victory</Button>
-        <Button onClick={() => this.handleChooseOutcome('defeat')}>Defeat</Button>
+        <Button color={colors.success} onClick={() => this.handleChooseOutcome('victory')}>Victory</Button>
+        <Button color={colors.failure} onClick={() => this.handleChooseOutcome('defeat')}>Defeat</Button>
       </ButtonList>
     )
   }

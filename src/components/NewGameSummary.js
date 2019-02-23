@@ -12,13 +12,16 @@ import resetGame from '../graphql/resetGame';
 import getWinratesByClass from '../graphql/getWinratesByClass';
 
 import { getData } from '../helpers/storage_utils';
-import { colors, spacers } from '../styles/vars';
+import { colors, spacers, fonts } from '../styles/vars';
 import { LargeButton } from '../styles/buttons';
 import styled from 'styled-components'
+import { getWinrateColor } from '../helpers/misc_utils';
+import { getHeroByName, getHeroImageById } from '../helpers/hero_classes';
+import { getCardImageById } from '../helpers/cards_api';
 
 const GameSummary = styled.section`
-  background: ${colors.layoutBg};
   box-sizing: border-box;
+  max-width: ${props => props.isStatic ? '350px' : 'none'};
 `;
 
 const GameSummaryHeader = styled.header`
@@ -28,6 +31,43 @@ const GameSummaryHeader = styled.header`
 
 const GameSummaryContent = styled.article`
   padding: ${spacers.paddings.x1} ${spacers.paddings.x2};
+`;
+
+const ChosenClass = styled.div`
+  display: grid;
+  grid-template-columns: 50% 50%;
+
+  img {
+    max-width: 100%;
+  }
+
+  h3 {
+    text-transform: capitalize;
+    margin-bottom: 10px;
+  }
+
+  p {
+    margin: 0;
+    font-size: ${fonts.smallSize}
+  }
+
+  span {
+    display: block;
+  }
+`;
+
+const OutcomeColored = styled.span`
+  color: ${props => props.outcome === 'victory' ? colors.success : colors.failure }
+`;
+
+const MulliganChosen = styled.img`
+  width: 25%
+`;
+
+const DeckWinrate = styled.p`
+  span {
+    color: ${props => props.color || colors.text};
+  }
 `;
 
 class NewGameSummary extends React.Component {
@@ -44,19 +84,18 @@ class NewGameSummary extends React.Component {
   outputWinrate(winrates) {
     let games = 0;
     let wins = 0;
-    let losses = 0;
 
     winrates.forEach(wr => {
       games += wr.games;
       wins += wr.wins;
-      losses += wr.losses;
     });
 
     const winrate = `${((wins/games) * 100).toFixed(2)}%`;
 
-    return (
-      <span>{winrate} (W: {wins} / L: {losses} / G: {games})</span>
-    )
+    return <DeckWinrate color={getWinrateColor(winrate)}>
+      <span>{winrate}</span>
+      {games} games
+    </DeckWinrate>
   }
 
   outputOppDeck(deck) {
@@ -135,7 +174,7 @@ class NewGameSummary extends React.Component {
                   } });
                 }}
               >
-                <LargeButton type="submit">Save game</LargeButton>
+                <LargeButton primary type="submit">Save game</LargeButton>
               </form>
               {loading && <p>Loading...</p>}
               {error && <p>Error :( Please try again</p>}
@@ -168,11 +207,6 @@ class NewGameSummary extends React.Component {
 
   render() {
     const { currentGame } = this.props;
-    let ClassWinrate = '';
-
-    if (currentGame.opponentClass) {
-      ClassWinrate = this.outputClassWinrate(currentGame.opponentClass);
-    }
 
     const SaveButton = this.outputSaveButton(currentGame);
     let chosenClass = 'Choose class to see information';
@@ -181,14 +215,31 @@ class NewGameSummary extends React.Component {
     let chosenOutcome = '';
 
     if (currentGame.opponentClass) {
-      chosenClass = <p><strong>Opponent class:</strong> {currentGame.opponentClass} {ClassWinrate}</p>
+      const ClassWinrate = this.outputClassWinrate(currentGame.opponentClass);
+      const hero = getHeroByName(currentGame.opponentClass);
+      const heroImage = getHeroImageById(hero.id);
+
+      chosenClass = (
+        <ChosenClass>
+          <img width='150' src={heroImage} alt={currentGame.opponentClass} />
+          <div>
+            <h3>{currentGame.opponentClass}</h3>
+            {ClassWinrate}
+          </div>
+        </ChosenClass>
+      );
     }
 
     if (currentGame.mulligan.length > 0) {
-      const mulligan = currentGame.mulligan.map((card, i) => (
-        <span key={`${card.cardId}_${i}`}>{card.cardName} / </span>
-      ));
-      chosenMulligan = <p><strong>Mulligan:</strong> {mulligan}</p>;
+      const mulligan = currentGame.mulligan.map((card, i) => {
+        return <MulliganChosen 
+          src={getCardImageById(card.cardId)} 
+          key={`${card.cardId}_${i}`} 
+          title={card.cardName} 
+          alt={card.cardName} 
+        />
+      });
+      chosenMulligan = <p><strong>Mulligan:</strong><br />{mulligan}</p>;
     }
 
     if (currentGame.opponentDeck) {
@@ -197,7 +248,7 @@ class NewGameSummary extends React.Component {
     }
 
     if (currentGame.outcome) {
-      chosenOutcome = <p><strong>Outcome:</strong> {currentGame.outcome}</p>;
+      chosenOutcome = <p><strong>Outcome:</strong> <OutcomeColored outcome={currentGame.outcome}>{currentGame.outcome}</OutcomeColored></p>;
     }
 
 

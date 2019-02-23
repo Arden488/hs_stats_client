@@ -6,6 +6,7 @@ export default gql`
     $charClass: String!,
     $archetypeId: String!,
     $code: String!,
+    $totalGames: Number!,
     $key_features: String
   ) {
     createOppDeck(
@@ -13,6 +14,7 @@ export default gql`
       charClass: $charClass,
       archetypeId: $archetypeId,
       code: $code,
+      totalGames: $totalGames,
       key_features: $key_features
     ) {
       _id

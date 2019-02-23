@@ -8,6 +8,7 @@ import getWinratesByClass from '../graphql/getWinratesByClass';
 import styled from 'styled-components'
 import { fonts, colors } from '../styles/vars';
 import { getData } from '../helpers/storage_utils';
+import { getWinrateColor } from '../helpers/misc_utils';
 
 const HeroClassesList = styled.div`
   display: grid;
@@ -20,19 +21,23 @@ const HeroChooseButton = styled.button`
   border: 0;
   position: relative;
 
-  span {
-    font-size: ${fonts.smallSize};
-    display: block;
-    position: absolute;
-    bottom: 0;
-    right: 0px;
-    width: 100%;
-    text-align: center;
-    color: ${colors.text};
-  }
-
   img {
+    display: inline-block;
+    background-image: url(images/card_placeholder.png);
+    width: 256px;
+    height: 382px;
     max-width: 100%;
+  }
+`;
+
+const OpponentWinrate = styled.p`
+  font-size: ${fonts.smallSize};
+  color: ${colors.text};
+  margin: 0;
+  text-align: center;
+
+  span {
+    color: ${props => props.color || colors.text};
   }
 `;
 
@@ -58,8 +63,8 @@ class ChooseOpponent extends React.Component {
       variables={{ deckId: getData('deck').id, opponentClass }}
     >
       {({ loading, error, data }) => {
-        if (loading) return <span>Loading...</span>;
-        if (error) return <span>Error: {error}</span>;
+        if (loading) return <OpponentWinrate>Loading...</OpponentWinrate>;
+        if (error) return <OpponentWinrate>Error...</OpponentWinrate>;
 
         return this.outputWinrate(data.getWinratesByClass);
       }}
@@ -69,19 +74,19 @@ class ChooseOpponent extends React.Component {
   outputWinrate(winrates) {
     let games = 0;
     let wins = 0;
-    let winrate = `Not enough data`;
+    // let winrate = `Not enough data`;
 
     winrates.forEach(wr => {
       games += wr.games;
       wins += wr.wins;
     });
 
-    if (games >= 10) {
-      winrate = `${((wins/games) * 100).toFixed(2)}%`;
-    }
+    // if (games >= 10) {
+    const winrate = `${((wins/games) * 100).toFixed(2)}%`;
+    // }
 
     return (
-      <span>{winrate} ({games})</span>
+      <OpponentWinrate color={getWinrateColor(winrate)}><span>{winrate}</span> ({games})</OpponentWinrate>
     )
   }
 

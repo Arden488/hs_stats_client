@@ -9,6 +9,7 @@ export default gql` query OppDeck($id: String!) {
       name,
       key_features
     },
+    totalGames,
     key_features
   }
 }`;

@@ -2,7 +2,7 @@ import styled from 'styled-components'
 import { colors, spacers, borders, fonts } from './vars';
 
 const Button = styled.button`
-  background-color: ${props => props.primary ? colors.primary : colors.elementsBg};
+  background-color: ${props => props.primary ? colors.primary : (props.color ? props.color : colors.elementsBg)};
   border-radius: ${borders.borderRadius};
   border: none;
   cursor: pointer;
