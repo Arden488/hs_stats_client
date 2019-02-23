@@ -90,8 +90,8 @@ const client = new ApolloClient({
     resolvers,
     typeDefs
   },
-  // uri: 'https://hs-stats-server.herokuapp.com/graphql'
-  uri: 'http://localhost:3333/graphql'
+  uri: 'https://hs-stats-server.herokuapp.com/graphql'
+  // uri: 'http://localhost:3333/graphql'
 });
 
 const render = Component => {
