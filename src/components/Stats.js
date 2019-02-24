@@ -1,7 +1,7 @@
 import React from 'react';
 import { withRouter, Redirect } from "react-router-dom";
 
-import { ApolloConsumer, Query, compose, graphql } from 'react-apollo';
+import { Query, compose, graphql } from 'react-apollo';
 import getActiveDeck from '../graphql/getActiveDeck';
 
 import {
@@ -11,12 +11,9 @@ import {
 
 import styled from 'styled-components'
 import getAllWinrates from '../graphql/getAllWinrates';
-import { colors, fonts, spacers } from '../styles/vars';
+import { colors, fonts } from '../styles/vars';
 import { getWinrateColor } from '../helpers/misc_utils';
-import { decodeDeck } from '../helpers/deck_codes_utils';
-import { getCardById } from '../helpers/cards_api';
-import getOppDeck from '../graphql/getOppDeck';
-import { getHeroImageById, getHeroByName } from '../helpers/hero_classes';
+import { getHeroByName } from '../helpers/hero_classes';
 
 const StatsContainer = styled.section`
   main {
@@ -102,9 +99,9 @@ const ClassStatsTotal = styled.div`
   grid-template-columns: 2fr 2fr;
 `;
 
-const Winrate = styled.span`
-  color: ${props => props.color || colors.text};
-`;
+// const Winrate = styled.span`
+//   color: ${props => props.color || colors.text};
+// `;
 
 const StatsBlock = styled.div`
   text-transform: uppercase;
@@ -126,7 +123,7 @@ const StatsBlockContainer = styled.div`
   margin-top: 50px;
 `;
 
-const EffectiveWinrate = styled(Winrate);
+// const EffectiveWinrate = styled(Winrate);
 
 class Stats extends React.Component {
   showItem(arch, name, index, totals) {
