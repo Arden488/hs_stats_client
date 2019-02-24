@@ -1,7 +1,9 @@
 import React from 'react';
 
-import { compose, graphql } from 'react-apollo';
+import { Mutation, compose, graphql } from 'react-apollo';
 import getCurrentGame from '../graphql/getCurrentGame';
+import updateArchetypeNotes from '../graphql/updateArchetypeNotes';
+import updateDeckNotes from '../graphql/updateDeckNotes';
 import ChooseOutcome from './ChooseOutcome';
 
 import { getCardImageById } from '../helpers/cards_api';
@@ -12,6 +14,7 @@ import {
   groupBy as _groupBy, 
   map as _map, 
   filter as _filter,
+  countBy as _countBy,
   difference as _difference,
   intersectionBy as _intersectionBy,
   findIndex as _findIndex,
@@ -22,7 +25,7 @@ import {
 import styled from 'styled-components'
 import updateGameOpponentDeck from '../graphql/updateGameOpponentDeck';
 import { colors, spacers, borders, fonts } from '../styles/vars';
-import { Button } from '../styles/buttons';
+import { Button, SmallButton } from '../styles/buttons';
 
 const PlayedCard = styled.img`
   height: 80px;
@@ -30,8 +33,8 @@ const PlayedCard = styled.img`
 
 const CardImageDuplicate = styled.img`
   position: absolute;
-  top: -10px;
-  left: 19px;
+  top: -4%;
+  left: 7%;
   opacity: .5;
   z-index: -1;
   filter: contrast(50%) grayscale(100%);
@@ -208,7 +211,7 @@ const CardChoiceName = styled.span`
 const CardListAll = styled.section`
   article {
     display: grid;
-    grid-template-columns: repeat(6, 1fr);
+    grid-template-columns: repeat(8, 1fr);
     align-content: start;
   }
 `;
@@ -263,6 +266,30 @@ const DeckHelperCloseButton = styled.button`
   cursor: pointer;
 `;
 
+const NotesContainer = styled.div`
+  margin-top: 30px;
+`;
+
+const NotesForm = styled.form`
+  margin-top: 30px;
+`;
+
+const NotesContent = styled.div`
+  margin-bottom: 15px;
+`;
+
+const NotesTextarea = styled.textarea`
+  background: none;
+  border: 1px solid ${colors.elementsBg};
+  color: ${colors.text};
+  display: block;
+  width: 100%;
+  resize: none;
+  padding: 10px;
+  margin-bottom: 15px;
+  box-sizing: border-box;
+`;
+
 const DeckHelperMain = styled.main``;
 const DeckHelperSub = styled.aside`
   padding-left: 50px;
@@ -281,10 +308,15 @@ class ShowAdvices extends React.Component {
       activeCards: [],
       openedDeckGroups: [],
       filteredCards: [],
+      notesArchetypeFormEdit: false,
+      notesDeckFormEdit: false,
+      notesEditArchetypeText: '',
+      notesEditDeckText: '',
       deckHelperOpen: false,
       deckHelperTitle: '',
       deckHelperCards: [],
       deckHelperDescr: '',
+      deckHelperExactDeck: false,
       deckHelperActiveDeck: null,
       deckHelperTotalGames: null,
       deckHelperDecksCount: null,
@@ -292,6 +324,9 @@ class ShowAdvices extends React.Component {
         return o.cost <= 1
       }
     }
+
+    this.handleNotesArchetypeTextChange = this.handleNotesArchetypeTextChange.bind(this);
+    this.handleNotesDeckTextChange = this.handleNotesDeckTextChange.bind(this);
   }
 
   filterCards(filter) {
@@ -404,7 +439,7 @@ class ShowAdvices extends React.Component {
       decks: newDecks,
       deckGroups: groups,
       filteredCards
-    }, function() {
+    }, () => {
       if (this.state.deckHelperOpen === true) {
         this.updateDeckHelper(this.state.deckHelperActiveDeck)
       }
@@ -414,8 +449,11 @@ class ShowAdvices extends React.Component {
   handleChooseCard(card) {
     const playedCards = this.state.playedCards;
     const removedCards = this.state.removedCards;
+    const playCount = _filter(this.state.playedCards, { dbfId: card.dbfId });
+    const playedCard = card;
+    playedCard.playCount = playCount.length + 1;
     let cards = this.state.activeCards;
-    playedCards.push(card);
+    playedCards.push(playedCard);
 
     this.filterCardsAndDecks(cards, playedCards, removedCards);
   }
@@ -473,7 +511,14 @@ class ShowAdvices extends React.Component {
   outputCardList(cards) {
     return cards.map(card => {
       const image = getCardImageById(card.id);
-      let deckSuggestion = '';
+      let leftCount = card.count;
+
+      if (this.state.playedCards.length > 0) {
+        const pCard = _filter(this.state.playedCards, { dbfId: card.dbfId })
+        if (pCard.length > 0) {
+          leftCount = pCard.length;
+        }
+      }
 
       let cardPopularity = '';
 
@@ -488,16 +533,19 @@ class ShowAdvices extends React.Component {
         >
           <CardChoiceName>{card.name}</CardChoiceName>
           {/* <CardRemove onClick={() => this.handleRemoveCard(card)}>X</CardRemove> */}
-          {card.count > 1 ? <CardImageDuplicate src={image} /> : ''}
+          {(card.count === 2 && card.count === leftCount) ? <CardImageDuplicate src={image} /> : ''}
           <img onClick={() => this.handleChooseCard(card)} src={image} alt={card.name} />
-          {deckSuggestion}
           {cardPopularity}
         </CardChoice>
     })
   }
 
   outputCardGroupsList(cardsByGroup) {
-    return _map(cardsByGroup, (cards, type) => {
+    return ['MINION', 'SPELL', 'WEAPON', 'HERO'].map(type => {
+      const cards = cardsByGroup[type];
+
+      if (cards === undefined) return false;
+
       const cardsOutput = this.outputCardList(cards);
 
       return (
@@ -575,10 +623,7 @@ class ShowAdvices extends React.Component {
           }
         }
       })
-      // cards = arch.cards.concat(cards)
     })
-
-    // cards = _uniqBy(cards, 'id');
 
     playedCards.forEach(card => {
       const i = _findIndex(cards, { 'id': card.id })
@@ -598,6 +643,7 @@ class ShowAdvices extends React.Component {
   componentDidMount() {
     const oppClass = this.props.currentGame.opponentClass;
     const newDecks = _filter(this.props.decks, { charClass: oppClass[0].toUpperCase() + oppClass.substring(1) });
+    
     const newCards = this.updateActiveCards(newDecks, this.state.playedCards, this.state.removedCards);
     const filteredCards = _filter(newCards, this.state.currFilter);
 
@@ -612,37 +658,6 @@ class ShowAdvices extends React.Component {
       filteredCards
     })
   }
-
-  // componentDidUpdate(prevProps, prevState, snapshot) {
-  //   if(this.props.currentGame.opponentClass && 
-  //     this.props.currentGame.opponentClass !== prevProps.currentGame.opponentClass) {
-  //     const oppClass = this.props.currentGame.opponentClass;
-  //     const newDecks = _filter(this.props.decks, { charClass: oppClass[0].toUpperCase() + oppClass.substring(1) });
-  //     const newCards = this.updateActiveCards(newDecks, this.state.playedCards);
-  //     const filteredCards = _filter(newCards, this.state.currFilter);
-
-  //     const groups = _groupBy(newDecks, (v) => {
-  //       return v.archetypeId.name
-  //     });
-
-  //     this.setState({
-  //       decks: newDecks,
-  //       activeCards: newCards,
-  //       deckGroups: groups,
-  //       filteredCards
-  //     })
-  //   }
-
-    // if(this.props.decks === prevProps.decks && this.state.decks.length === 0) {
-    //   const newDecks = _filter(this.props.decks, { charClass: this.props.currentGame.opponentClass });
-    //   const newCards = this.updateActiveCards(newDecks, this.state.playedCards);
-
-    //   this.setState({
-    //     decks: newDecks,
-    //     activeCards: newCards
-    //   })
-    // }
-  // }
 
   expandDeckGroup(key) {
     const openedDeckGroups = this.state.openedDeckGroups;
@@ -782,9 +797,10 @@ class ShowAdvices extends React.Component {
 
     decks.forEach((dck) => {
       let av = true;
+
       playedCards.forEach(c => {
-        const i = _findIndex(dck.cards, { 'id': c.id })
-        if (i === -1) {
+        const card = _find(dck.cards, { 'id': c.id })
+        if (card === undefined || card.count < c.playCount) {
           av = false
         }
       })
@@ -807,26 +823,54 @@ class ShowAdvices extends React.Component {
     return leftDecks
   }
 
+  updateDeckHelperMainCards(oldCards, playedCards) {
+    const newCards = [];
+
+    oldCards.forEach(card => {
+      const diffCard = _filter(playedCards, { dbfId: card.dbfId })
+      if (diffCard.length === 0 || (diffCard.length === 1 && card.count === 2)) { newCards.push(card) }
+    });
+
+    return newCards;
+  }
+
+  differCards(sourceStack, diffStack) {
+    const outputStack = [];
+
+    sourceStack.forEach(card => {
+      const diffCardIndex = _findIndex(diffStack, { dbfId: card.dbfId })
+      if (diffCardIndex === -1) outputStack.push(card)
+    });
+
+    return outputStack;
+  }
+
   updateDeckHelper(deck, openExactDeck) {
+    console.log('ShowAdvices - updateDeckHelper')
     const archetype = deck.archetypeId.name;
-    
     const decks = _sortBy(this.state.deckGroups[archetype], ['totalGames']).reverse()
     const mostPopularDeck = decks[0];
     const targetDeck = openExactDeck === true ? deck : mostPopularDeck;
     const totalGames = decks.reduce((acc, val) => { return acc + val.totalGames }, 0)
 
-    const allArchCards = this.updateActiveCards(decks, this.state.playedCards, this.state.removedCards)
-    const cards = _intersectionBy(allArchCards, targetDeck.cards, 'dbfId');
-    const otherCards = _difference(allArchCards, cards);
+    const mainCards = this.updateDeckHelperMainCards(targetDeck.cards, this.state.playedCards);
+    const targetIndex = decks.indexOf(targetDeck);
+    const otherDecks = decks;
+    otherDecks.splice(targetIndex, 1);
+    const allArchCards = this.updateActiveCards(otherDecks, this.state.playedCards, this.state.removedCards)
+    const allOtherCards = this.differCards(allArchCards, mainCards)
 
     this.setState({
-      deckHelperActiveDeck: deck,
+      deckHelperExactDeck: openExactDeck,
+      deckHelperActiveDeck: targetDeck,
       deckHelperDecksCount: decks.length,
       deckHelperTitle: targetDeck.archetypeId.name,
-      deckHelperCards: cards,
+      deckHelperCards: mainCards,
       deckHelperDescr: targetDeck.archetypeId.key_features,
-      deckOtherCards: otherCards,
-      deckHelperTotalGames: totalGames
+      deckOtherCards: allOtherCards,
+      deckHelperTotalGames: totalGames,
+      notesEditArchetypeText: targetDeck.archetypeId.notes,
+      notesEditDeckText: targetDeck.notes
     })
   }
 
@@ -845,19 +889,21 @@ class ShowAdvices extends React.Component {
   }
 
   renderDeckHelper() {
+    console.log('ShowAdvices - renderDeckHelper')
     const cards = _sortBy(this.state.deckHelperCards, ['cost']);
     const otherCards = _sortBy(this.state.deckOtherCards, ['cost']);
     const cardsOutput = this.outputCardList(cards);
     const otherCardsOutput = this.outputCardList(otherCards);
     const single = this.state.deckHelperDecksCount === 1;
     const opponentInfo = this.outputOpponentGameInfo();
+    const ShowAndEditNotes = this.showNotesForm();
 
     return (
       <DeckHelperOverlay open={this.state.deckHelperOpen}>
         <DeckHelperCloseButton onClick={() => this.handleDeckHelperCloseButton()}>x</DeckHelperCloseButton>
         <DeckHelperMain>
           <CardListBox single={single}>
-            <h3>{this.state.deckHelperTitle}</h3>
+            <h3>{this.state.deckHelperTitle} ({this.state.deckHelperActiveDeck && this.state.deckHelperActiveDeck.totalGames})</h3>
             <p>{this.state.deckHelperDescr}</p>
             {opponentInfo}
             <section>
@@ -873,15 +919,111 @@ class ShowAdvices extends React.Component {
         <DeckHelperSub>
           <Button onClick={() => this.handleChooseOppDeck(this.state.deckHelperActiveDeck._id)}>This is the deck</Button>
           <ChooseOutcome />
-          <p>Some description...</p>
-          <p>Some description...</p>
-          <p>Some description...</p>
+          {ShowAndEditNotes}
         </DeckHelperSub>
       </DeckHelperOverlay>
     )
   }
+  
+  handleNotesArchetypeTextChange(event) {
+    this.setState({
+      notesEditArchetypeText: event.target.value
+    });
+  }
+  
+  handleNotesDeckTextChange(event) {
+    this.setState({
+      notesEditDeckText: event.target.value
+    });
+  }
+
+  outputArchetypeNotesForm() {
+    return <Mutation 
+      mutation={updateArchetypeNotes}
+    >
+      {(mutation, { loading, error, data, client }) => {
+        if (data && data.updateArchetypeNotes && data.updateArchetypeNotes._id) {
+          this.setState({
+            notesArchetypeFormEdit: false
+          })
+        }
+
+        const variables = {
+          id: this.state.deckHelperActiveDeck.archetypeId._id,
+          notes: this.state.notesEditArchetypeText
+        };
+        
+        return (
+          <NotesForm
+            onSubmit={e => {
+              e.preventDefault();
+              mutation({ variables });
+            }}
+          >
+            <NotesTextarea onChange={this.handleNotesArchetypeTextChange} value={this.state.notesEditArchetypeText}></NotesTextarea>
+            <Button primary type="submit">Save notes</Button>
+            {loading && <p>Loading...</p>}
+            {error && <p>Error :( Please try again</p>}
+          </NotesForm>
+        )
+      }}
+    </Mutation>;
+  }
+
+  outputDeckNotesForm() {
+    return <Mutation 
+      mutation={updateDeckNotes}
+    >
+      {(mutation, { loading, error, data, client }) => {
+        if (data && data.updateDeckNotes && data.updateDeckNotes._id) {
+          this.setState({
+            notesDeckFormEdit: false
+          })
+        }
+
+        const variables = {
+          id: this.state.deckHelperActiveDeck._id,
+          notes: this.state.notesEditDeckText
+        };
+        
+        return (
+          <NotesForm
+            onSubmit={e => {
+              e.preventDefault();
+              mutation({ variables });
+            }}
+          >
+            <NotesTextarea onChange={this.handleNotesDeckTextChange} value={this.state.notesEditDeckText}></NotesTextarea>
+            <Button primary type="submit">Save notes</Button>
+            {loading && <p>Loading...</p>}
+            {error && <p>Error :( Please try again</p>}
+          </NotesForm>
+        )
+      }}
+    </Mutation>;
+  }
+
+  showNotesForm() {
+    return (
+      <NotesContainer>
+        <NotesContent>
+          <h3>Archetype notes:</h3>
+          <div dangerouslySetInnerHTML={{__html: this.state.notesEditArchetypeText}}></div>
+        </NotesContent>
+        <SmallButton onClick={() => this.setState({ notesArchetypeFormEdit: !this.state.notesArchetypeFormEdit })}>Toggle</SmallButton>
+        {this.state.notesArchetypeFormEdit && this.outputArchetypeNotesForm()}
+        <NotesContent>
+          <h3>Deck notes:</h3>
+          <div dangerouslySetInnerHTML={{__html: this.state.notesEditDeckText}}></div>
+        </NotesContent>
+        <SmallButton onClick={() => this.setState({ notesDeckFormEdit: !this.state.notesDeckFormEdit })}>Toggle</SmallButton>
+        {this.state.notesDeckFormEdit && this.outputDeckNotesForm()}
+      </NotesContainer>
+    )
+  }
 
   render() {
+    console.log('ShowAdvices - render')
     const { currentGame } = this.props;
 
     if ( !currentGame.opponentClass || currentGame.mulligan.length < 3 || currentGame.outcome ) return false;

@@ -88,7 +88,6 @@ const MulliganCardChoice = styled.button`
     background-image: url(images/card_placeholder.png);
     background-size: contain;
     width: 150px;
-    height: 224px;
     max-width: 100%;
   }
 `;
@@ -234,7 +233,7 @@ class ChooseMulligan extends React.Component {
           {placeholders}
         </MulliganChosenList>
         <ActionBlock>
-          {this.state.mulliganCount >= 3 && <LargeButton primary onClick={this.handleMulliganApprove}>Done</LargeButton>}
+          {this.state.mulligan.length >= 3 && <LargeButton primary onClick={this.handleMulliganApprove}>Done</LargeButton>}
         </ActionBlock>
       </MulliganWrapper>
     )

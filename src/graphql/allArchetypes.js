@@ -6,6 +6,7 @@ export default gql` {
     name,
     charClass,
     key_cards,
-    key_features
+    key_features,
+    notes
   }
 }`;

@@ -5,12 +5,14 @@ export default gql` {
     _id,
     name,
     archetypeId {
+      _id,
       name,
       key_features
     },
     charClass,
     code,
     key_features,
+    notes,
     totalGames,
     cards {
       cost,

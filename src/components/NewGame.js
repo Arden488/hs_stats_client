@@ -3,6 +3,10 @@ import { withRouter, Redirect } from "react-router-dom";
 
 import { Query, compose, graphql } from 'react-apollo';
 
+import { 
+  filter as _filter
+} from 'lodash';
+
 import ChooseOpponent from './ChooseOpponent';
 import ChooseMulligan from './ChooseMulligan';
 import ChooseOutcome from './ChooseOutcome';
@@ -43,7 +47,7 @@ class NewGame extends React.Component {
     const oppClass = this.props.currentGame.opponentClass;
     const oppClassCap = oppClass.charAt(0).toUpperCase() + oppClass.slice(1);
     
-    return <Query query={getOppDecksByClass} variables={{ charClass: oppClassCap }}>
+    return <Query fetchPolicy={'no-cache'} query={getOppDecksByClass} variables={{ charClass: oppClassCap }}>
       {({ loading, error, data, client }) => {
         if (loading) return <p>Loading opponents' decks...</p>;
         if (error) return <p>Error: {error}</p>;

@@ -24,8 +24,8 @@ const HeroChooseButton = styled.button`
   img {
     display: inline-block;
     background-image: url(images/card_placeholder.png);
+    background-size: contain;
     width: 256px;
-    height: 382px;
     max-width: 100%;
   }
 `;

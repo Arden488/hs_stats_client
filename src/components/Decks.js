@@ -1,5 +1,5 @@
 import React from 'react';
-import { Query, graphql, compose } from 'react-apollo';
+import { withApollo, Query, graphql, compose } from 'react-apollo';
 import { decodeDeck } from '../helpers/deck_codes_utils';
 import HearthstoneJSON from "hearthstonejson-client";
 import { getCardById } from '../helpers/cards_api';
@@ -121,6 +121,11 @@ class Decks extends React.Component {
   }
 
   updateLocalStorage() {
+    this.props.client.resetStore();
+    this.props.client.onResetStore(
+      () => alert('Apollo cache cleared...')
+    );
+
     localStorage.clear();
 
     if (localStorage.key(0) === null) {
@@ -167,5 +172,5 @@ class Decks extends React.Component {
 }
 
 export default compose(
-  graphql(updateActiveDeck, { name: 'updateActiveDeck' })
-)(Decks);
+  graphql(updateActiveDeck, { name: 'updateActiveDeck' }),
+)(withApollo(Decks));

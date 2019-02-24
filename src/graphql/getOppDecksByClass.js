@@ -5,12 +5,15 @@ export default gql` query getOppDecksByClass($charClass: String!) {
     _id,
     name,
     archetypeId {
+      _id,
       name,
-      key_features
+      key_features,
+      notes
     },
     charClass,
     code,
     key_features,
+    notes,
     totalGames,
     cards {
       cost,
