@@ -3,16 +3,17 @@ import { Query, compose, graphql } from 'react-apollo';
 import { Link } from 'react-router-dom'
 
 import Decks from './components/Decks';
+import Fireworks from './components/Fireworks';
 
 import getActiveDeck from './graphql/getActiveDeck';
-import getCurrentSession from './graphql/getCurrentSession';
 import getAllWinrates from './graphql/getAllWinrates';
 
 import './App.css';
 import styled from 'styled-components'
 import { LargeButton, Button } from './styles/buttons';
-import { fonts, spacers, colors } from './styles/vars';
+import { fonts, spacers, colors, borders } from './styles/vars';
 import { getWinrateColor } from './helpers/misc_utils';
+import CalcGamesToLegend from './components/CalcGamesToLegend';
 
 const StatsBlock = styled.div`
   display: inline-block;
@@ -25,6 +26,19 @@ const StatsBlock = styled.div`
     font-size: ${fonts.extraLargeSize};
     color: ${props => props.color || colors.text};
   }
+`;
+
+const StarButton = styled.button`
+  display: block;
+  border: 0;
+  background: ${colors.third};
+  width: 40px;
+  height: 25px;
+  border-radius: ${borders.borderRadius};
+  margin-top: 7px;
+  color: ${colors.text};
+  font-size: ${fonts.size};
+  cursor: pointer;
 `;
 
 const ActiveDeck = styled.section`
@@ -65,41 +79,105 @@ const Aside = styled.aside`
 `;
 
 class App extends Component {
+  constructor(props) {
+    super(props);
+
+    this.state = {
+      level: 5,
+      stars: 0,
+      totalLosses: 0,
+      totalWins: 0,
+      initFireworks: false
+    }
+  }
+
+  componentDidMount() {
+    this.setState({
+      level: parseInt(localStorage.getItem('level')) || 5,
+      stars: parseInt(localStorage.getItem('stars')) || 0
+    })
+  }
+
+  getCurrentSession() {
+    const dateObj = new Date();
+    const dd = String(dateObj.getDate()).padStart(2, '0');
+    const mm = String(dateObj.getMonth() + 1).padStart(2, '0');
+    const yyyy = dateObj.getFullYear();
+
+    const today = dd + '.' + mm + '.' + yyyy;
+
+    const storeForDate = localStorage.getItem(today);
+    let newStore;
+
+    if (storeForDate === null) {
+      newStore = { wins: 0, losses: 0 };
+    } else {
+      newStore = JSON.parse( storeForDate );
+    }
+
+    localStorage.setItem(today, JSON.stringify(newStore) );
+
+    return newStore;
+  }
+
   outputTotalWinrate(deck, winrates) {
-    let games = 0;
-    let wins = 0;
-    let losses = 0;
+    let games = this.state.totalLosses + this.state.totalWins;
+    let wins = this.state.totalWins;
+    let losses = this.state.totalLosses;
 
-    winrates.forEach(wr => {
-      games += wr.games;
-      wins += wr.wins;
-      losses += wr.losses;
-    });
+    if (games === 0) {
+      winrates.forEach(wr => {
+        // games += wr.games;
+        wins += wr.wins;
+        losses += wr.losses;
+      });
 
-    const session = this.props.currentSession;
+      this.setState({
+        totalLosses: losses,
+        totalWins: wins
+      })
+    }
+
+    const session = this.getCurrentSession();
 
     const sessGames = session.wins + session.losses;
-    const winrate = `${(((wins+session.wins)/(games+sessGames)) * 100).toFixed(2)}%`;
-    const sessWinrate = sessGames > 0 ? `${((session.wins/(sessGames)) * 100).toFixed(2)}%` : 'N/A';
+    const winrate = (((wins)/(games)) * 100).toFixed(2);
+    const sessWinrate = sessGames > 0 ? ((session.wins/(sessGames)) * 100).toFixed(2) : 'N/A';
+
+    const starsToLegend = ((this.state.level - 1) * 5) + 5 - this.state.stars + 1;
 
     return (
       <div>
+        <Fireworks init={this.state.initFireworks} />
+
         <h2>{deck.name}</h2>
 
         <h3>Total:</h3>
         <TotalStatsBox>
-          <StatsBlock><span>{games + sessGames}</span>games</StatsBlock>
-          <StatsBlock><span>{wins + session.wins}</span>wins</StatsBlock>
-          <StatsBlock><span>{losses + session.losses}</span>losses</StatsBlock>
-          <StatsBlock color={getWinrateColor(winrate)}><span>{winrate}</span>winrate</StatsBlock>
+          <StatsBlock><span>{games}</span>games</StatsBlock>
+          <StatsBlock><span>{wins}</span>wins</StatsBlock>
+          <StatsBlock><span>{losses}</span>losses</StatsBlock>
+          <StatsBlock color={getWinrateColor(winrate)}><span>{winrate}%</span>winrate</StatsBlock>
         </TotalStatsBox>
 
-        <h3>Current session:</h3>
+        <h3>Today session:</h3>
         <div>
           <StatsBlock><span>{sessGames}</span>games</StatsBlock>
           <StatsBlock><span>{session.wins}</span>wins</StatsBlock>
           <StatsBlock><span>{session.losses}</span>losses</StatsBlock>
-          <StatsBlock color={getWinrateColor(winrate)}><span>{sessWinrate}</span>winrate</StatsBlock>
+          <StatsBlock color={getWinrateColor(sessWinrate)}><span>{sessWinrate}%</span>winrate</StatsBlock>
+        </div>
+
+        <h3>To legend:</h3>
+        <div>
+          <StatsBlock><span>{this.state.level}</span> level</StatsBlock>
+          <StatsBlock><span>{this.state.stars}</span> stars</StatsBlock>
+          <StatsBlock>
+            <StarButton onClick={() => this.changeStars('up')}>+</StarButton>
+            <StarButton onClick={() => this.changeStars('down')}>-</StarButton>
+          </StatsBlock>
+          <StatsBlock><span>{starsToLegend}</span> stars to legend</StatsBlock>
+          <CalcGamesToLegend starsToLegend={starsToLegend} rank={this.state.level} stars={this.state.stars} winrate={winrate} />
         </div>
 
         <p>
@@ -107,6 +185,55 @@ class App extends Component {
         </p>
       </div>
     )
+  }
+
+  changeLevel(dir) {
+    if (dir === 'up') {
+      if (this.state.level > 1) {
+        this.setState({
+          level: this.state.level - 1,
+          stars: 1
+        })
+        localStorage.setItem('level', this.state.level - 1);
+        localStorage.setItem('stars', 1)
+      } else {
+        // alert('Legend!!!!');
+        this.setState({
+          initFireworks: true
+        })
+      }
+    } else if (dir === 'down') {
+      if (this.state.level < 5) {
+        this.setState({
+          level: this.state.level + 1,
+          stars: 4
+        })
+        localStorage.setItem('level', this.state.level + 1);
+        localStorage.setItem('stars', 4)
+      }
+    }
+  }
+
+  changeStars(dir) {
+    if (dir === 'up') {
+      if (this.state.stars < 5) {
+        this.setState({
+          stars: this.state.stars + 1
+        })
+        localStorage.setItem('stars', this.state.stars + 1)
+      } else {
+        this.changeLevel('up');
+      }
+    } else if (dir === 'down') {
+      if (this.state.stars > 0) {
+        this.setState({
+          stars: this.state.stars - 1
+        })
+        localStorage.setItem('stars', this.state.stars - 1)
+      } else {
+        this.changeLevel('down');
+      }
+    }
   }
 
   showActiveDeck(deck) {
@@ -154,10 +281,5 @@ export default compose(
     props: ({ data: { activeDeck } }) => ({
         activeDeck
     })
-  }),
-  graphql(getCurrentSession, {
-    props: ({ data: { currentSession } }) => ({
-      currentSession
-    })
-  }),
+  })
 )(App);

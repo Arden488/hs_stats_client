@@ -4,8 +4,6 @@ import { Mutation, Query, compose, graphql } from 'react-apollo';
 import { uniqBy as _uniqBy } from 'lodash';
 
 import getCurrentGame from '../graphql/getCurrentGame';
-import updateCurrentSession from '../graphql/updateCurrentSession';
-import getCurrentSession from '../graphql/getCurrentSession';
 import getOppDeck from '../graphql/getOppDeck';
 import createGameAndUpdateWinrate from '../graphql/createGameAndUpdateWinrate';
 import resetGame from '../graphql/resetGame';
@@ -122,8 +120,26 @@ class NewGameSummary extends React.Component {
     )
   }
 
+  getDate() {
+    const dateObj = new Date();
+    const dd = String(dateObj.getDate()).padStart(2, '0');
+    const mm = String(dateObj.getMonth() + 1).padStart(2, '0');
+    const yyyy = dateObj.getFullYear();
+
+    const today = dd + '.' + mm + '.' + yyyy;
+
+    return today;
+  }
+
+  getCurrentSession(today) {
+    const storeForDate = JSON.parse( localStorage.getItem(today) );
+
+    return storeForDate;
+  }
+
   updateSession(outcome) {
-    const session = this.props.currentSession;
+    const today = this.getDate();
+    const session = this.getCurrentSession(today);
     const up = { wins: session.wins, losses: session.losses }
     if (outcome === 'victory') {
       up.wins++
@@ -131,9 +147,11 @@ class NewGameSummary extends React.Component {
       up.losses++
     }
 
-    this.props.updateCurrentSession({
-      variables: { wins: up.wins, losses: up.losses }
-    })
+    localStorage.setItem(today, JSON.stringify(up));
+
+    // this.props.updateCurrentSession({
+    //   variables: { wins: up.wins, losses: up.losses }
+    // })
   }
 
   outputSaveButton(game) {
@@ -274,12 +292,6 @@ class NewGameSummary extends React.Component {
 export default compose(
   withRouter,
   graphql(resetGame, { name: 'resetGame' }),
-  graphql(updateCurrentSession, { name: 'updateCurrentSession' }),
-  graphql(getCurrentSession, {
-    props: ({ data: { currentSession } }) => ({
-      currentSession
-    })
-  }),
   graphql(getCurrentGame, {
     props: ({ data: { currentGame } }) => ({
       currentGame

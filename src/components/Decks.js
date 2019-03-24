@@ -18,6 +18,7 @@ import { getWinrateColor } from '../helpers/misc_utils';
 const DeckList = styled.div`
   display: grid;
   grid-template-columns: repeat(10, 1fr);
+  align-items: flex-start;
 `;
 
 const DeckWinrate = styled.p`
@@ -31,7 +32,7 @@ const Deck = styled.button`
   background: none;
   cursor: pointer;
   text-align: center;
-  color: ${colors.text}
+  color: ${colors.text};
 
   p {
     margin: 0;

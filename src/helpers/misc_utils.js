@@ -4,7 +4,7 @@ function getWinrateColor(stat) {
   let color = colors.text;
   stat = parseInt(stat);
 
-  if (stat >= 52) {
+  if (stat >= 53) {
     color = colors.success;
   } else if (stat >= 50) {
     color = colors.warning;

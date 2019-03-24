@@ -3,10 +3,6 @@ import { withRouter, Redirect } from "react-router-dom";
 
 import { Query, compose, graphql } from 'react-apollo';
 
-import { 
-  filter as _filter
-} from 'lodash';
-
 import ChooseOpponent from './ChooseOpponent';
 import ChooseMulligan from './ChooseMulligan';
 import ChooseOutcome from './ChooseOutcome';

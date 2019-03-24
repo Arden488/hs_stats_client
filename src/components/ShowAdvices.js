@@ -303,6 +303,7 @@ class ShowAdvices extends React.Component {
       removedCards: [],
       opponentMana: 0,
       activeCards: [],
+      maxCounts: {},
       openedDeckGroups: [],
       filteredCards: [],
       notesArchetypeFormEdit: false,
@@ -508,7 +509,7 @@ class ShowAdvices extends React.Component {
   outputCardList(cards) {
     return cards.map(card => {
       const image = getCardImageById(card.id);
-      let leftCount = card.count;
+      let leftCount = this.state.maxCounts[card.dbfId];
 
       if (this.state.playedCards.length > 0) {
         const pCard = _filter(this.state.playedCards, { dbfId: card.dbfId })
@@ -530,7 +531,7 @@ class ShowAdvices extends React.Component {
         >
           <CardChoiceName>{card.name}</CardChoiceName>
           {/* <CardRemove onClick={() => this.handleRemoveCard(card)}>X</CardRemove> */}
-          {(card.count === 2 && card.count === leftCount) ? <CardImageDuplicate src={image} /> : ''}
+          {(this.state.maxCounts[card.dbfId] === 2) ? <CardImageDuplicate src={image} /> : ''}
           <img onClick={() => this.handleChooseCard(card)} src={image} alt={card.name} />
           {cardPopularity}
         </CardChoice>
@@ -587,61 +588,65 @@ class ShowAdvices extends React.Component {
   }
 
   updateActiveCards(decks, playedCards, removedCards) {
-    let cards = [];
+    const newCards = [];
+    const maxCounts = {};
 
     decks.forEach(deck => {
       deck.cards.forEach(card => {
-        // if ( !card.decks ) { card.decks = []; }
-        const deckData = { name: deck.name, archetype: deck.archetypeId.name };
-        const deckGames = deck.totalGames || null;
         
-        const index = _findIndex(cards, { 'id': card.id });
-        if ( index === -1 ) {
-          card.decks = [deckData];
-          
-          if (deckGames !== null) {
-            card.games = deckGames;
+        // const deckData = { name: deck.name, archetype: deck.archetypeId.name };
+        // const deckGames = deck.totalGames || null;
+
+        const diffCard = _filter(playedCards, { 'id': card.id })
+        if (diffCard.length === 0 || diffCard.length < card.count) {
+          const index = _findIndex(newCards, { 'id': card.id });
+
+          if ( index === -1) {
+            // card.decks = [deckData];
+            
+            // if (deckGames !== null) {
+            //   card.games = deckGames;
+            // }
+
+            maxCounts[card.dbfId] = card.count - diffCard.length;
+
+            newCards.push(card)
+          } else {
+            if (maxCounts[card.dbfId] === 1) {
+              maxCounts[card.dbfId] = 2 - diffCard.length;
+            }
           }
+          // } else if ( newCards[index].count < 2 && card.count > 1 && newCards[index].rarity !== 'LEGENDARY' ) {
+            // newCards[index].decks.push(deckData)
 
-          cards.push(card)
-        } else if ( cards[index].count < 2 && cards[index].rarity !== 'LEGENDARY' ) {
-          cards[index].decks.push(deckData)
+            // if (deckGames !== null) {
+            //   newCards[index].games += deckGames;
+            // }
 
-          if (deckGames !== null) {
-            cards[index].games += deckGames;
-          }
+            // newCards[index].count = 2;
+          // } else {
+            // newCards[index].decks.push(deckData)
 
-          cards[index].count++;
-        } else {
-          cards[index].decks.push(deckData)
-
-          if (deckGames !== null) {
-            cards[index].games += deckGames;
-          }
+            // if (deckGames !== null) {
+            //   newCards[index].games += deckGames;
+            // }
+          // }
         }
       })
     })
 
-    playedCards.forEach(card => {
-      const i = _findIndex(cards, { 'id': card.id })
-      
-      if (cards[i]) {
-        if (cards[i].count === 2) {
-          cards[i].count = 1;
-        } else {
-          cards.splice(i, 1);
-        }
-      }
+    this.setState({
+      maxCounts
     })
 
-    return cards;
+    return newCards;
   }
 
   componentDidMount() {
     const oppClass = this.props.currentGame.opponentClass;
     const newDecks = _filter(this.props.decks, { charClass: oppClass[0].toUpperCase() + oppClass.substring(1) });
-    
-    const newCards = this.updateActiveCards(newDecks, this.state.playedCards, this.state.removedCards);
+    const tmpDecks = newDecks;
+    const newCards = this.updateActiveCards(tmpDecks, this.state.playedCards, this.state.removedCards);
     const filteredCards = _filter(newCards, this.state.currFilter);
 
     const groups = _groupBy(newDecks, (v) => {
@@ -791,12 +796,14 @@ class ShowAdvices extends React.Component {
   updateActualDecks(playedCards, removedCards) {
     const decks = this.state.decks;
     const leftDecks = [];
+    const filteredOutDecks = [];
 
     decks.forEach((dck) => {
       let av = true;
 
       playedCards.forEach(c => {
-        const card = _find(dck.cards, { 'id': c.id })
+        const card = _find(dck.cards, { 'dbfId': c.dbfId })
+        
         if (card === undefined || card.count < c.playCount) {
           av = false
         }
@@ -810,6 +817,8 @@ class ShowAdvices extends React.Component {
 
       if (av) {
         leftDecks.push(dck);
+      } else {
+        filteredOutDecks.push(dck)
       }
     })
 
@@ -843,11 +852,16 @@ class ShowAdvices extends React.Component {
   }
 
   updateDeckHelper(deck, openExactDeck) {
-    console.log('ShowAdvices - updateDeckHelper')
     const archetype = deck.archetypeId.name;
     const decks = _sortBy(this.state.deckGroups[archetype], ['totalGames']).reverse()
     const mostPopularDeck = decks[0];
     const targetDeck = openExactDeck === true ? deck : mostPopularDeck;
+
+    if (!targetDeck) {
+      this.handleDeckHelperCloseButton();
+      return false;
+    }
+
     const totalGames = decks.reduce((acc, val) => { return acc + val.totalGames }, 0)
 
     const mainCards = this.updateDeckHelperMainCards(targetDeck.cards, this.state.playedCards);
@@ -886,7 +900,6 @@ class ShowAdvices extends React.Component {
   }
 
   renderDeckHelper() {
-    console.log('ShowAdvices - renderDeckHelper')
     const cards = _sortBy(this.state.deckHelperCards, ['cost']);
     const otherCards = _sortBy(this.state.deckOtherCards, ['cost']);
     const cardsOutput = this.outputCardList(cards);
@@ -1020,7 +1033,6 @@ class ShowAdvices extends React.Component {
   }
 
   render() {
-    console.log('ShowAdvices - render')
     const { currentGame } = this.props;
 
     if ( !currentGame.opponentClass || currentGame.mulligan.length < 3 || currentGame.outcome ) return false;

@@ -29,6 +29,9 @@ const defaults = {
     id: null,
     name: null,
     heroImage: null
+    // heroImage: "https://art.hearthstonejson.com/v1/render/latest/enUS/256x/HERO_05.png",
+    // id: "5c72eb06fb6fc072012797db",
+    // name: "Midrange hunter (2 hounds)"
   },
   currentGame: {
     __typename: 'CurrentGame',
@@ -36,6 +39,15 @@ const defaults = {
     opponentDeck: null,
     mulligan: [],
     outcome: null
+    // mulligan: [
+    //   {cardId: "UNG_915", cardName: "Crackling Razormaw", __typename: "Card"},
+    //   {cardId: "UNG_915", cardName: "Crackling Razormaw", __typename: "Card"},
+    //   {cardId: "EX1_531", cardName: "Scavenging Hyena", __typename: "Card"},
+    //   {cardId: "EX1_531", cardName: "Scavenging Hyena", __typename: "Card"}
+    // ],
+    // opponentClass: "hunter",
+    // opponentDeck: null,
+    // outcome: null
   },
   currentSession: {
     __typename: 'CurrentSession',

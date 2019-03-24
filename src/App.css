@@ -9,10 +9,21 @@ html {
 
 body {
   font-size: 16px;
-  background: #090909;
+  background: #000;
   color: #ffffff;
 }
 
 #root {
   position: relative;
+}
+
+canvas {
+	cursor: crosshair;
+	display: block;
+	position: relative;
+	z-index: 3;
+}
+
+canvas:active {
+	cursor: crosshair;
 }
