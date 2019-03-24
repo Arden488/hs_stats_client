@@ -12,6 +12,18 @@ const classes = [
   { name: 'priest', id: 'HERO_09' }
 ];
 
+const heroList = {
+  813: 'priest',
+  671: 'paladin',
+  637: 'mage',
+  31: 'hunter',
+  893: 'warlock',
+  930: 'rogue',
+  274: 'druid',
+  7: 'warrior',
+  1066: 'shaman'
+}
+
 function getHeroImageById(id) {
   return `https://art.hearthstonejson.com/v1/render/latest/enUS/256x/${id}.png`;
 }
@@ -30,4 +42,11 @@ function getHeroByName(name) {
   return heroClass;
 }
 
-export { getListOfClasses, getHeroByName, getHeroImageById }
+function getHeroById(id) {
+  const heroName = heroList[id];
+  const hero = getHeroByName(heroName);
+  
+  return hero;
+}
+
+export { getListOfClasses, getHeroByName, getHeroById, getHeroImageById }

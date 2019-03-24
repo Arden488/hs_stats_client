@@ -1,7 +1,18 @@
 import { find } from 'lodash';
 
 function getCardById(id) {
-  const data = localStorage.getItem('hsjson-29349_enUS');
+  let cardsDataKey;
+  for (var i = 0; i < localStorage.length; i++){
+    if (localStorage.key(i).indexOf('hsjson-') !== -1) {
+      cardsDataKey = localStorage.key(i);
+    }
+  }
+
+  if (!cardsDataKey) {
+    return;
+  }
+
+  const data = localStorage.getItem(cardsDataKey);
   const cards = JSON.parse(data).cards;
 
   const card = find(cards, { 'dbfId': id });

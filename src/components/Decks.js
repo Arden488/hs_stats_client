@@ -14,6 +14,7 @@ import { Button } from '../styles/buttons';
 
 import styled from 'styled-components'
 import { getWinrateColor } from '../helpers/misc_utils';
+import { getHeroById } from '../helpers/hero_classes';
 
 const DeckList = styled.div`
   display: grid;
@@ -46,6 +47,7 @@ class Decks extends React.Component {
   }
 
   fetchDeckCards(cardsIds) {
+    console.log(cardsIds);
     const deckCards = cardsIds.map(card => {
       const cardInfo = getCardById(card[0]);
       cardInfo.count = card[1];
@@ -57,9 +59,9 @@ class Decks extends React.Component {
   }
 
   fetchDeckHeroImage(heroId) {
-    const heroCard = getCardById(heroId[0]);
-    
-    return `https://art.hearthstonejson.com/v1/render/latest/enUS/256x/${heroCard.id}.png`;
+    const heroCard = getHeroById(heroId[0])
+
+    return heroCard.heroImage;
   }
   
   handleDeckClick(deck) {
