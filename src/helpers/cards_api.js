@@ -1,7 +1,7 @@
 import { find } from 'lodash';
 
 function getCardById(id) {
-  const data = localStorage.getItem('hsjson-28855_enUS');
+  const data = localStorage.getItem('hsjson-29349_enUS');
   const cards = JSON.parse(data).cards;
 
   const card = find(cards, { 'dbfId': id });
